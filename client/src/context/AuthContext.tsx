@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { MOCK_USER, authStorage } from '@/lib/authUtils';
+import { supabase } from '@/lib/supabaseClient';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   fullName: string;
   email: string;
@@ -18,8 +17,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  isAuthenticated: boolean; // Add isAuthenticated property
-  login: (username: string, password: string) => Promise<void>;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -36,7 +35,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: false,
   error: null,
-  isAuthenticated: false, // Add default value
+  isAuthenticated: false,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
@@ -49,66 +48,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const [error, setError] = useState<Error | null>(null);
 
+  // Fetch current user and profile from Supabase
+  const fetchUserProfile = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return null;
+    // Try to fetch profile from 'profiles' table
+    let { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    // If profile does not exist, create it now
+    if (profileError || !profile) {
+      // Try to create a minimal profile
+      const { error: insertError } = await supabase.from('profiles').insert([
+        {
+          id: user.id,
+          full_name: user.user_metadata?.fullName || user.user_metadata?.full_name || user.email || '',
+          avatar: user.user_metadata?.avatar_url || null,
+          role: user.user_metadata?.role || 'student',
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      if (!insertError) {
+        // Try fetching again
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        profile = newProfile;
+      }
+    }
+    if (!profile) return null;
+    return {
+      id: user.id,
+      username: profile.username || '',
+      fullName: profile.full_name || '',
+      email: user.email,
+      role: profile.role || 'student',
+      avatar: profile.avatar || '',
+      bio: profile.bio || '',
+    } as User;
+  };
 
-
-  // Check if we have a user in local storage first
-  const storedUser = authStorage.getUser();
-  
-  // Fetch current user
   const { data: user, isLoading, refetch } = useQuery({
     queryKey: ['/api/auth/me'],
-    queryFn: async () => {
-      try {
-        // Try to get user from localStorage first
-        if (storedUser) {
-          return storedUser;
-        }
-        
-        // Return mock user for testing purposes
-        return MOCK_USER;
-        
-        // Original authentication code will be restored later
-      } catch (err) {
-        // Return null on auth errors, but don't set error state
-        // This allows components to handle unauthenticated state gracefully
-        return null;
-      }
-    },
-    staleTime: 0, // Make sure the data is always fresh
-    retry: false, // Don't retry on failure
-    initialData: storedUser // Use stored user as initial data if available
+    queryFn: fetchUserProfile,
+    staleTime: 0,
+    retry: false,
   });
 
   // Login function
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
       setError(null);
-      // Simulating successful login for testing
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+      await refetch();
       toast({
         title: 'Đăng nhập thành công',
         description: 'Chào mừng bạn quay trở lại!',
       });
-      
-      // Set mock user data directly in React Query cache
-      queryClient.setQueryData(['/api/auth/me'], MOCK_USER);
-      
-      // Save user to localStorage for persistence
-      authStorage.setUser(MOCK_USER);
-      
-      return;
-      
-      /*
-      // Original login code - commented out for testing
-      const response = await apiRequest('POST', '/api/auth/login', { username, password });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Login failed');
-      }
-      
-      // Refetch user after login
-      await refetch();
-      */
     } catch (err: any) {
       setError(err);
       toast({
@@ -124,37 +125,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: RegisterData) => {
     try {
       setError(null);
-      // Simulate successful registration for testing
+      // Sign up with Supabase Auth
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            username: userData.username,
+            fullName: userData.fullName,
+            role: userData.role,
+          },
+        },
+      });
+      if (signUpError) throw signUpError;
       toast({
         title: 'Đăng ký thành công',
-        description: 'Tài khoản của bạn đã được tạo',
+        description: 'Vui lòng xác nhận email trước khi đăng nhập.',
       });
-      
-      // Set mock user data directly 
-      queryClient.setQueryData(['/api/auth/me'], MOCK_USER);
-      
-      // Save user to localStorage for persistence
-      authStorage.setUser(MOCK_USER);
-      
-      return;
-      
-      /*
-      // Original registration code - commented out for testing
-      const response = await apiRequest('POST', '/api/auth/register', userData);
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Registration failed');
-      }
-      
-      toast({
-        title: 'Đăng ký thành công',
-        description: 'Tài khoản của bạn đã được tạo',
-      });
-      
-      // Login after registration
-      await login(userData.username, userData.password);
-      */
     } catch (err: any) {
       setError(err);
       toast({
@@ -170,26 +157,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setError(null);
-      
-      // Clear user data from React Query cache
+      await supabase.auth.signOut();
       queryClient.setQueryData(['/api/auth/me'], null);
-      
-      // Clear user data from localStorage
-      authStorage.clearUser();
-      
       toast({
         title: 'Đăng xuất thành công',
         description: 'Hẹn gặp lại!',
       });
-      
-      /*
-      // Original logout code - commented out for testing
-      await apiRequest('POST', '/api/auth/logout');
-      
-      // Clear user data and cache
-      queryClient.setQueryData(['/api/auth/me'], null);
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      */
     } catch (err: any) {
       setError(err);
       toast({
@@ -200,22 +173,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Create a proper user value to avoid TypeScript errors
-  const authUser: User | null = user as User;
-
-  // Check if user is authenticated
-  const isAuthenticated = !!authUser;
+  const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ 
-      user: authUser, 
-      isLoading, 
-      error, 
-      isAuthenticated, 
-      login, 
-      register, 
-      logout 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user: user ?? null,
+        isLoading,
+        error,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

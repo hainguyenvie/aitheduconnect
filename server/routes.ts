@@ -189,55 +189,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/teacher-profiles/:id", async (req, res) => {
-    try {
-      const profileId = Number(req.params.id);
-      const profile = await storage.getTeacherProfile(profileId);
-      
-      if (!profile) {
-        return res.status(404).json({ message: "Teacher profile not found" });
-      }
-      
-      const user = await storage.getUser(profile.userId);
-      const subjects = await storage.getTeacherSubjects(profile.id);
-      const courses = await storage.getTeacherCourses(profile.id);
-      const reviews = await storage.getReviews(profile.id);
-      
-      // Enrich reviews with student info
-      const enrichedReviews = await Promise.all(
-        reviews.map(async (review) => {
-          const student = await storage.getUser(review.studentId);
-          return {
-            ...review,
-            student: student ? {
-              id: student.id,
-              username: student.username,
-              fullName: student.fullName,
-              avatar: student.avatar
-            } : undefined
-          };
-        })
-      );
-      
-      res.json({
-        ...profile,
-        user: user ? {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName,
-          avatar: user.avatar,
-          bio: user.bio
-        } : undefined,
-        subjects,
-        courses,
-        reviews: enrichedReviews
-      });
-    } catch (err: any) {
-      res.status(400).json({ message: err.message });
-    }
-  });
-  
   // Teacher subject routes
   app.post("/api/teacher-subjects", ensureTeacher, async (req, res) => {
     try {
@@ -861,60 +812,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(profile);
-    } catch (err: any) {
-      res.status(500).json({ message: err.message });
-    }
-  });
-  
-  // Get teacher profile by ID (public endpoint)
-  app.get("/api/teacher-profiles/:id", async (req, res) => {
-    try {
-      const profileId = parseInt(req.params.id);
-      const profile = await storage.getTeacherProfile(profileId);
-      
-      if (!profile) {
-        return res.status(404).json({ message: "Không tìm thấy hồ sơ giáo viên" });
-      }
-      
-      // Get user information
-      const user = await storage.getUser(profile.userId);
-      if (user) {
-        (profile as any).user = {
-          fullName: user.fullName,
-          email: user.email,
-          avatar: user.avatar
-        };
-      }
-      
-      res.json(profile);
-    } catch (err: any) {
-      res.status(500).json({ message: err.message });
-    }
-  });
-  
-  // Update teacher profile (for teachers only)
-  app.patch("/api/teacher-profile/me", ensureTeacher, async (req, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const profile = await storage.getTeacherProfileByUserId(userId);
-      
-      if (!profile) {
-        return res.status(404).json({ message: "Không tìm thấy hồ sơ giáo viên" });
-      }
-      
-      // Get update data from request body
-      const { title, education, experience, hourlyRate, introVideo } = req.body;
-      
-      // Update the profile
-      const updatedProfile = await storage.updateTeacherProfile(profile.id, {
-        title,
-        education,
-        experience,
-        hourlyRate,
-        introVideo: introVideo || null
-      });
-      
-      res.json(updatedProfile);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

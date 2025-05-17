@@ -213,7 +213,7 @@ const AdminTeacherApplications = () => {
                       <Button onClick={() => handleReview(app, false)} variant="destructive">Từ chối</Button>
                     </div>
                   )}
-                </div>
+                        </div>
               ))}
             </div>
           )}

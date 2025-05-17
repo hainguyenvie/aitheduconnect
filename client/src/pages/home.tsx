@@ -27,7 +27,7 @@ const HomePage = () => {
         <HeroSection />
         {/* SOUL SECTION: Giáo viên nổi bật - make this stand out visually! */}
         <div style={{ marginTop: 40, marginBottom: 40 }}>
-          <FeaturedTeachers />
+        <FeaturedTeachers />
         </div>
         <CategorySection />
         <FeaturedCourses />

@@ -72,7 +72,7 @@ router.get('/teacher-profiles/:id', async (req, res) => {
       .single();
 
     console.log('DEBUG: Supabase response:', { data, error });
-
+    
     if (error || !data) {
       return res.status(404).json({ message: 'Không tìm thấy thông tin giáo viên' });
     }
@@ -95,7 +95,7 @@ router.get('/teacher-profiles/:id', async (req, res) => {
       experience: data.experience,
       introVideo: data.intro_video,
     };
-
+    
     res.json(teacher);
   } catch (error) {
     console.error('Error fetching teacher profile:', error);

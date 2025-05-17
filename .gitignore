@@ -1,0 +1,49 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+client/dist/
+
+# Server build (if any)
+server/dist/
+
+# Coverage
+coverage/
+
+# Misc
+*.local
+*.log
+
+# Ignore generated assets
+attached_assets/
+
+# Ignore backup/config files
+*.backup 

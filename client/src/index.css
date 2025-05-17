@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+    --muted: 210 20% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    
+    /* Hồng - Thân thiện, gần gũi */
+    --primary: 340 82% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Xanh lá - Tăng trưởng, thư giãn */
+    --secondary: 164 76% 42%; 
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Tím - Sáng tạo, tinh tế */
+    --accent: 264 67% 60%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Vàng - Tối ưu cho đánh giá */
+    --accent-yellow: 45 100% 51%;
+    --accent-yellow-foreground: 0 0% 10%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --ring: 210 100% 50%;
+    --radius: 0.75rem;
+    
+    /* Các màu cho biểu đồ */
+    --chart-1: 210 100% 50%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 32 100% 55%;
+    --chart-4: 45 100% 51%;
+    --chart-5: 262 83% 58%;
+    
+    /* Màu cho thanh bên */
+    --sidebar-background: 210 30% 96%;
+    --sidebar-foreground: 210 20% 30%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 32 100% 55%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 30% 90%;
+    --sidebar-ring: 210 40% 50%;
+  }
+
+  .dark {
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --popover: 222.2 47.4% 11.2%; 
+    --popover-foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    
+    /* Xanh dương sáng hơn trong dark mode */
+    --primary: 210 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Xanh lá sáng hơn trong dark mode */
+    --secondary: 142 76% 45%;
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Cam sáng hơn trong dark mode */
+    --accent: 32 100% 65%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Vàng sáng hơn trong dark mode */
+    --accent-yellow: 45 100% 60%;
+    --accent-yellow-foreground: 0 0% 10%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --ring: 210 100% 65%;
+    --radius: 0.75rem;
+    
+    /* Các màu cho biểu đồ trong dark mode */
+    --chart-1: 210 100% 60%;
+    --chart-2: 142 76% 45%;
+    --chart-3: 32 100% 65%;
+    --chart-4: 45 100% 60%;
+    --chart-5: 262 83% 65%;
+    
+    /* Màu cho thanh bên trong dark mode */
+    --sidebar-background: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 32 100% 65%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 210 100% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+  
+  h1 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+  
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+/* Vietnamese cultural design elements */
+.lotus-pattern {
+  background-color: rgba(26, 92, 255, 0.03);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><path d="M50 10c-5 5-15 5-20 10s-5 15-10 20-15 5-20 10 5 15 0 20 10 15 15 20 15 5 20 10 15-5 20 0 5-15 10-20 15-5 20-10-5-15 0-20-10-15-15-20-15-5-20-10-15 5-20 0z" fill="none" stroke="%231a5cff" stroke-width="0.5" opacity="0.2"/></svg>');
+  background-size: 100px;
+  background-repeat: repeat;
+  background-blend-mode: soft-light;
+  background-opacity: 0.1;
+}
+
+.trung-dong-pattern {
+  background-color: rgba(26, 92, 255, 0.03);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="50" cy="50" r="40" fill="none" stroke="%231a5cff" stroke-width="0.5" opacity="0.2"/><circle cx="50" cy="50" r="35" fill="none" stroke="%231a5cff" stroke-width="0.5" opacity="0.2"/><circle cx="50" cy="50" r="30" fill="none" stroke="%231a5cff" stroke-width="0.5" opacity="0.2"/><circle cx="50" cy="50" r="25" fill="none" stroke="%231a5cff" stroke-width="0.5" opacity="0.2"/></svg>');
+  background-size: 100px;
+  background-repeat: repeat;
+  background-blend-mode: soft-light;
+  background-opacity: 0.1;
+}
+
+/* Utility Classes */
+@layer utilities {
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+  
+  .animated-bg {
+    @apply bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 animate-gradient-x;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .glass-effect {
+    @apply bg-white/70 dark:bg-black/70 backdrop-blur-md border border-white/20 dark:border-white/10;
+  }
+  
+  .highlight-item {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:h-1 after:w-full after:origin-bottom-right after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100;
+  }
+  
+  /* Thêm hiệu ứng cho các thẻ */
+  .tag-item {
+    @apply transition-all duration-200 transform hover:scale-105;
+  }
+  
+  /* Hiệu ứng nút */
+  .button-pulse {
+    @apply relative overflow-hidden;
+  }
+  
+  .button-pulse::after {
+    @apply content-[''] absolute top-0 left-0 right-0 bottom-0 bg-white opacity-0 rounded-lg transform scale-x-0 scale-y-0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+  
+  /* Hiệu ứng nổi bật cho nút */
+  .hover-glow:hover {
+    @apply shadow-lg shadow-primary/30;
+    filter: brightness(1.1);
+  }
+  
+  /* Hiệu ứng thanh trượt */
+  .smooth-slider {
+    @apply transition-all duration-500 ease-in-out;
+  }
+  
+  /* Hiệu ứng xuất hiện */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Hiệu ứng card */
+  .card-float {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card-float:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+}

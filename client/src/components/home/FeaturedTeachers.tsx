@@ -228,23 +228,23 @@ const FeaturedTeachers = () => {
           className="text-4xl md:text-5xl font-extrabold mb-2 text-indigo-700 inline-flex items-center justify-center gap-2 drop-shadow-lg"
         >
           <Star className="text-amber-400 drop-shadow-md animate-bounce" size={36} />
-          Giáo viên nổi bật
-        </h2>
+              Giáo viên nổi bật
+            </h2>
         <p className="text-lg md:text-xl text-gray-700 mt-2 font-medium max-w-2xl mx-auto">
           Khám phá các giáo viên xuất sắc, được đánh giá cao trong cộng đồng. Họ là linh hồn của nền tảng Aithedu Connect!
         </p>
       </motion.div>
       {/* Fade-in animation for the cards grid */}
-      <motion.div
+        <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 1.2 }}
         className="relative z-10"
-      >
+        >
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 px-4 md:px-8">
-          {featuredTeachers
-            .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+            {featuredTeachers
+              .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
             .map((teacher: Teacher) => (
               <motion.div
                 key={teacher.id}
@@ -256,54 +256,54 @@ const FeaturedTeachers = () => {
                 {renderTeacherCard(teacher)}
               </motion.div>
             ))}
-        </div>
+          </div>
       </motion.div>
-      
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-10 space-x-2">
-          <button
-            className={`p-2 rounded-full ${
-              currentPage === 0
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-            disabled={currentPage === 0}
-            aria-label="Previous page"
-          >
-            <ChevronLeft size={20} />
-          </button>
           
-          {Array.from({ length: totalPages }).map((_, index) => (
-            <button
-              key={index}
-              className={`w-8 h-8 rounded-full ${
-                currentPage === index
-                  ? "bg-primary text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-              onClick={() => setCurrentPage(index)}
-              aria-label={`Page ${index + 1}`}
-            >
-              {index + 1}
-            </button>
-          ))}
-          
-          <button
-            className={`p-2 rounded-full ${
-              currentPage === totalPages - 1
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-            disabled={currentPage === totalPages - 1}
-            aria-label="Next page"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      )}
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-10 space-x-2">
+              <button
+                className={`p-2 rounded-full ${
+                  currentPage === 0
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                disabled={currentPage === 0}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-8 h-8 rounded-full ${
+                    currentPage === index
+                      ? "bg-primary text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setCurrentPage(index)}
+                  aria-label={`Page ${index + 1}`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+              
+              <button
+                className={`p-2 rounded-full ${
+                  currentPage === totalPages - 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                disabled={currentPage === totalPages - 1}
+                aria-label="Next page"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
       
       {/* Teacher detail modal */}
       {selectedTeacherId && (

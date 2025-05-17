@@ -105,7 +105,7 @@ export class DatabaseStorage implements IStorage {
     }
     return data as User | undefined;
   }
-
+  
   async getUserByUsername(username: string): Promise<User | undefined> {
     const { data, error } = await supabase
       .from('users')
@@ -117,7 +117,7 @@ export class DatabaseStorage implements IStorage {
     }
     return data as User | undefined;
   }
-
+  
   async getUserByEmail(email: string): Promise<User | undefined> {
     const { data, error } = await supabase
       .from('users')
@@ -129,7 +129,7 @@ export class DatabaseStorage implements IStorage {
     }
     return data as User | undefined;
   }
-
+  
   async createUser(insertUser: InsertUser): Promise<User> {
     const { data, error } = await supabase
       .from('users')

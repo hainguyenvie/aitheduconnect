@@ -676,20 +676,20 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
         <div className="space-y-4">
           {Array.isArray(teacher.availability) && teacher.availability.length > 0 ? (
             teacher.availability.slice(0, isScheduleExpanded ? undefined : 3).map((day: { day: string; slots: string[] }, index: number) => (
-              <div key={index} className="border rounded-lg p-3">
-                <h4 className="font-medium text-sm mb-2">{day.day}</h4>
-                <div className="flex flex-wrap gap-2">
+            <div key={index} className="border rounded-lg p-3">
+              <h4 className="font-medium text-sm mb-2">{day.day}</h4>
+              <div className="flex flex-wrap gap-2">
                   {day.slots.map((slot: string, slotIndex: number) => (
-                    <Badge 
-                      key={slotIndex} 
-                      variant="secondary"
-                      className="bg-green-100 text-green-800 hover:bg-green-200"
-                    >
-                      {slot}
-                    </Badge>
-                  ))}
-                </div>
+                  <Badge 
+                    key={slotIndex} 
+                    variant="secondary"
+                    className="bg-green-100 text-green-800 hover:bg-green-200"
+                  >
+                    {slot}
+                  </Badge>
+                ))}
               </div>
+            </div>
             ))
           ) : (
             <div className="text-gray-400 text-sm">Chưa cập nhật</div>
@@ -744,123 +744,123 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                   className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 pb-6 text-white relative overflow-hidden"
                   style={{ minHeight: 220 }}
                 >
-                  {/* Buttons at top right like in the image */}
-                  <div className="absolute right-6 top-5 flex space-x-2">
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                {/* Buttons at top right like in the image */}
+                <div className="absolute right-6 top-5 flex space-x-2">
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Button 
+                      className="flex items-center gap-1 bg-white/90 text-primary font-medium rounded-full px-5 py-2 h-auto shadow-lg relative group overflow-hidden"
                     >
-                      <Button 
-                        className="flex items-center gap-1 bg-white/90 text-primary font-medium rounded-full px-5 py-2 h-auto shadow-lg relative group overflow-hidden"
-                      >
-                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                        <span className="absolute inset-0 w-0 h-full bg-gradient-to-r from-indigo-600 to-blue-600 group-hover:w-full transition-all duration-500 ease-in-out"></span>
-                        <MessageCircle className="h-5 w-5 z-10 relative group-hover:text-white transition-colors duration-300" />
-                        <span className="z-10 relative group-hover:text-white transition-colors duration-300 font-semibold">Nhắn tin</span>
-                      </Button>
-                    </motion.div>
-                    
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                      <span className="absolute inset-0 w-0 h-full bg-gradient-to-r from-indigo-600 to-blue-600 group-hover:w-full transition-all duration-500 ease-in-out"></span>
+                      <MessageCircle className="h-5 w-5 z-10 relative group-hover:text-white transition-colors duration-300" />
+                      <span className="z-10 relative group-hover:text-white transition-colors duration-300 font-semibold">Nhắn tin</span>
+                    </Button>
+                  </motion.div>
+                  
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Button 
+                      className="flex items-center gap-1 bg-white/90 text-primary font-medium rounded-full px-5 py-2 h-auto shadow-lg relative group overflow-hidden"
+                      onClick={() => setIsBookingDialogOpen(true)}
                     >
-                      <Button 
-                        className="flex items-center gap-1 bg-white/90 text-primary font-medium rounded-full px-5 py-2 h-auto shadow-lg relative group overflow-hidden"
-                        onClick={() => setIsBookingDialogOpen(true)}
-                      >
-                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-pink-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                        <span className="absolute inset-0 w-0 h-full bg-gradient-to-r from-pink-600 to-purple-600 group-hover:w-full transition-all duration-500 ease-in-out"></span>
-                        <Calendar className="h-5 w-5 z-10 relative group-hover:text-white transition-colors duration-300" />
-                        <span className="z-10 relative group-hover:text-white transition-colors duration-300 font-semibold">Đặt lịch học</span>
-                      </Button>
-                    </motion.div>
-                  </div>
-                  {/* Teacher profile with better spacing */}
-                  <div className="flex pt-8 pb-2 items-center">
-                    <motion.div 
-                      className="flex-shrink-0"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                        <img 
+                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-pink-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                      <span className="absolute inset-0 w-0 h-full bg-gradient-to-r from-pink-600 to-purple-600 group-hover:w-full transition-all duration-500 ease-in-out"></span>
+                      <Calendar className="h-5 w-5 z-10 relative group-hover:text-white transition-colors duration-300" />
+                      <span className="z-10 relative group-hover:text-white transition-colors duration-300 font-semibold">Đặt lịch học</span>
+                    </Button>
+                  </motion.div>
+                </div>
+                {/* Teacher profile with better spacing */}
+                <div className="flex pt-8 pb-2 items-center">
+                  <motion.div 
+                    className="flex-shrink-0"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Avatar className="w-24 h-24 border-4 border-white shadow-md">
+                      <img 
                           src={teacher.avatar} 
                           alt={teacher.fullName}
-                          className="w-full h-full object-cover"
-                        />
-                      </Avatar>
-                    </motion.div>
-                    
-                    <div className="ml-6">
-                      <motion.div 
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.1 }}
-                      >
-                        <div className="flex items-center">
+                        className="w-full h-full object-cover"
+                      />
+                    </Avatar>
+                  </motion.div>
+                  
+                  <div className="ml-6">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.1 }}
+                    >
+                      <div className="flex items-center">
                           <h2 className="text-2xl font-bold">{teacher.fullName}</h2>
                           {teacher.isVerified && (
-                            <CheckCircle className="h-5 w-5 text-blue-300 ml-2" />
-                          )}
-                        </div>
+                          <CheckCircle className="h-5 w-5 text-blue-300 ml-2" />
+                        )}
+                      </div>
                         <div className="text-pink-100 text-lg py-1">{teacher.title}</div>
-                      </motion.div>
-                      
-                      <div className="flex items-center mt-3 space-x-6">
-                        <div className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-1.5" />
+                    </motion.div>
+                    
+                    <div className="flex items-center mt-3 space-x-6">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-1.5" />
                           <span>{teacher.location}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Star className="h-4 w-4 mr-1.5 fill-yellow-400 text-yellow-400" />
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 mr-1.5 fill-yellow-400 text-yellow-400" />
                           <span className="font-medium">{teacher.rating}</span>
                           <span className="opacity-90 ml-1">({teacher.ratingCount} đánh giá)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 mr-1.5" />
+                      </div>
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-1.5" />
                           <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(teacher.hourlyRate)}đ/giờ</span>
-                        </div>
                       </div>
                     </div>
                   </div>
+                </div>
                   {/* Subject badges */}
-                  <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                     {Array.isArray(teacher.subjects) && teacher.subjects.length > 0 ? (
                       teacher.subjects.map((subject: string, index: number) => (
-                        <Badge key={index} className="bg-pink-100 hover:bg-pink-200 text-pink-700 border-0 px-4 py-1.5 rounded-full font-medium">
-                          {subject}
-                        </Badge>
+                    <Badge key={index} className="bg-pink-100 hover:bg-pink-200 text-pink-700 border-0 px-4 py-1.5 rounded-full font-medium">
+                      {subject}
+                    </Badge>
                       ))
                     ) : (
                       <div className="text-gray-400 text-sm">Chưa cập nhật</div>
                     )}
-                  </div>
                 </div>
+              </div>
                 {/* Tabs navigation as direct child of Tabs */}
                 <TabsList className="flex w-full bg-gradient-to-r from-pink-500 to-purple-600 px-0 border-0 rounded-t-none rounded-b-lg">
                   <TabsTrigger value="overview" className="py-3 px-4 font-semibold data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-white data-[state=active]:bg-transparent text-white/80 border-0 rounded-none transition-all">Tổng quan</TabsTrigger>
                   <TabsTrigger value="courses" className="py-3 px-4 font-semibold data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-white data-[state=active]:bg-transparent text-white/80 border-0 rounded-none transition-all">Khóa học</TabsTrigger>
                   <TabsTrigger value="schedule" className="py-3 px-4 font-semibold data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-white data-[state=active]:bg-transparent text-white/80 border-0 rounded-none transition-all">Lịch dạy</TabsTrigger>
                   <TabsTrigger value="reviews" className="py-3 px-4 font-semibold data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-white data-[state=active]:bg-transparent text-white/80 border-0 rounded-none transition-all">Đánh giá</TabsTrigger>
-                </TabsList>
+                    </TabsList>
                 {/* Tab content area */}
                 <div 
                   className="flex-1 min-h-0 overflow-auto bg-white rounded-b-lg p-6"
                   style={{ paddingTop: 32 }}
                 >
-                  <TabsContent value="overview" className="mt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="md:col-span-2">
-                        <div className="mb-6">
-                          <h3 className="text-lg font-medium mb-3">Giới thiệu</h3>
+                    <TabsContent value="overview" className="mt-0">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2">
+                          <div className="mb-6">
+                            <h3 className="text-lg font-medium mb-3">Giới thiệu</h3>
                           <p className="text-gray-600">{teacher.bio || <span className="text-gray-400">Chưa cập nhật</span>}</p>
-                        </div>
-                        <div className="mb-6">
-                          <h3 className="text-lg font-medium mb-3">Chuyên môn</h3>
-                          <div className="grid grid-cols-2 gap-4">
+                          </div>
+                          <div className="mb-6">
+                            <h3 className="text-lg font-medium mb-3">Chuyên môn</h3>
+                            <div className="grid grid-cols-2 gap-4">
                             {Array.isArray(teacher.categories) && teacher.categories.length > 0 ? (
                               teacher.categories.map((category: string, idx: number) => (
                                 <div key={idx} className="flex items-center bg-gray-50 p-3 rounded-lg">
@@ -873,126 +873,126 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                             ) : (
                               <div className="text-gray-400 text-sm">Chưa cập nhật</div>
                             )}
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-medium mb-3">Khóa học nổi bật</h3>
+                            <div className="space-y-3">
+                              {mockCourses.slice(0, 2).map(course => (
+                                <div key={course.id} className="border rounded-lg p-4">
+                                  <div className="flex justify-between items-start">
+                                    <h4 className="font-medium">{course.title}</h4>
+                                    <Badge className="bg-primary text-white">{new Intl.NumberFormat('vi-VN').format(course.price)}đ</Badge>
+                                  </div>
+                                  <p className="text-gray-600 mt-2 text-sm line-clamp-2">{course.description}</p>
+                                  <div className="flex space-x-4 mt-2 text-sm text-gray-500">
+                                    <div className="flex items-center">
+                                      <Clock className="mr-1 w-3 h-3" />
+                                      <span>{course.duration}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                      <Star className="mr-1 w-3 h-3 fill-yellow-500 text-yellow-500" />
+                                      <span>{course.rating}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              <Button 
+                                variant="link" 
+                                className="text-primary"
+                                onClick={() => setActiveTab('courses')}
+                              >
+                                Xem tất cả khóa học
+                              </Button>
+                            </div>
                           </div>
                         </div>
                         <div>
-                          <h3 className="text-lg font-medium mb-3">Khóa học nổi bật</h3>
-                          <div className="space-y-3">
-                            {mockCourses.slice(0, 2).map(course => (
-                              <div key={course.id} className="border rounded-lg p-4">
-                                <div className="flex justify-between items-start">
-                                  <h4 className="font-medium">{course.title}</h4>
-                                  <Badge className="bg-primary text-white">{new Intl.NumberFormat('vi-VN').format(course.price)}đ</Badge>
+                          <div className="border rounded-lg p-4 sticky top-[72px]">
+                            <h3 className="text-lg font-medium mb-4">Thông tin chi tiết</h3>
+                            {/* Video preview section at the top */}
+                            <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
+                              <div className="bg-slate-800 aspect-video relative">
+                                {/* Chalk-like border design */}
+                                <div className="absolute inset-0 border-4 border-dashed border-white/20 m-1 pointer-events-none"></div>
+                                <img 
+                                  src="https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+                                  alt="Video giới thiệu" 
+                                  className="w-full h-full object-cover opacity-80"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="bg-white/80 hover:bg-white text-pink-600 hover:text-pink-700 rounded-full p-3 shadow-xl transition-all duration-300"
+                                  >
+                                    <div className="w-12 h-12 bg-pink-600 hover:bg-pink-700 rounded-full flex items-center justify-center">
+                                      <Play className="h-6 w-6 text-white fill-white" />
+                                    </div>
+                                  </motion.button>
                                 </div>
-                                <p className="text-gray-600 mt-2 text-sm line-clamp-2">{course.description}</p>
-                                <div className="flex space-x-4 mt-2 text-sm text-gray-500">
-                                  <div className="flex items-center">
-                                    <Clock className="mr-1 w-3 h-3" />
-                                    <span>{course.duration}</span>
-                                  </div>
-                                  <div className="flex items-center">
-                                    <Star className="mr-1 w-3 h-3 fill-yellow-500 text-yellow-500" />
-                                    <span>{course.rating}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                            <Button 
-                              variant="link" 
-                              className="text-primary"
-                              onClick={() => setActiveTab('courses')}
-                            >
-                              Xem tất cả khóa học
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="border rounded-lg p-4 sticky top-[72px]">
-                          <h3 className="text-lg font-medium mb-4">Thông tin chi tiết</h3>
-                          {/* Video preview section at the top */}
-                          <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
-                            <div className="bg-slate-800 aspect-video relative">
-                              {/* Chalk-like border design */}
-                              <div className="absolute inset-0 border-4 border-dashed border-white/20 m-1 pointer-events-none"></div>
-                              <img 
-                                src="https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
-                                alt="Video giới thiệu" 
-                                className="w-full h-full object-cover opacity-80"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="bg-white/80 hover:bg-white text-pink-600 hover:text-pink-700 rounded-full p-3 shadow-xl transition-all duration-300"
-                                >
-                                  <div className="w-12 h-12 bg-pink-600 hover:bg-pink-700 rounded-full flex items-center justify-center">
-                                    <Play className="h-6 w-6 text-white fill-white" />
-                                  </div>
-                                </motion.button>
                               </div>
                             </div>
-                          </div>
-                          <div className="space-y-4">
-                            <div className="flex">
-                              <div className="w-10 text-primary">
-                                <GraduationCap className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <div className="text-sm text-gray-500">Học vấn</div>
+                            <div className="space-y-4">
+                              <div className="flex">
+                                <div className="w-10 text-primary">
+                                  <GraduationCap className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <div className="text-sm text-gray-500">Học vấn</div>
                                 <div>{teacher.education || <span className="text-gray-400">Chưa cập nhật</span>}</div>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex">
-                              <div className="w-10 text-primary">
-                                <Briefcase className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <div className="text-sm text-gray-500">Kinh nghiệm</div>
+                              <div className="flex">
+                                <div className="w-10 text-primary">
+                                  <Briefcase className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <div className="text-sm text-gray-500">Kinh nghiệm</div>
                                 <div>{teacher.experience || <span className="text-gray-400">Chưa cập nhật</span>}</div>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex">
-                              <div className="w-10 text-primary">
-                                <Book className="w-5 h-5" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="text-sm text-gray-500">Chuyên môn</div>
+                              <div className="flex">
+                                <div className="w-10 text-primary">
+                                  <Book className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-sm text-gray-500">Chuyên môn</div>
                                 <div className="break-words">{Array.isArray(teacher.subjects) && teacher.subjects.length > 0 ? teacher.subjects.join(', ') : <span className="text-gray-400">Chưa cập nhật</span>}</div>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex">
-                              <div className="w-10 text-primary">
-                                <Video className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <div className="text-sm text-gray-500">Video giới thiệu</div>
+                              <div className="flex">
+                                <div className="w-10 text-primary">
+                                  <Video className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <div className="text-sm text-gray-500">Video giới thiệu</div>
                                 {teacher.introVideo ? (
                                   <a href={teacher.introVideo} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 cursor-pointer">Xem video</a>
                                 ) : (
                                   <span className="text-gray-400">Chưa cập nhật</span>
                                 )}
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="courses" className="mt-0">
-                    {renderCourseTab()}
-                  </TabsContent>
-                  
-                  <TabsContent value="schedule" className="mt-0">
-                    {renderScheduleTab()}
-                  </TabsContent>
-                  
-                  <TabsContent value="reviews" className="mt-0">
-                    {renderReviewsTab()}
-                  </TabsContent>
-                </div>
-              </Tabs>
+                    </TabsContent>
+                    
+                    <TabsContent value="courses" className="mt-0">
+                      {renderCourseTab()}
+                    </TabsContent>
+                    
+                    <TabsContent value="schedule" className="mt-0">
+                      {renderScheduleTab()}
+                    </TabsContent>
+                    
+                    <TabsContent value="reviews" className="mt-0">
+                      {renderReviewsTab()}
+                    </TabsContent>
+                  </div>
+                </Tabs>
             </div>
           </motion.div>
           

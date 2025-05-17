@@ -3,11 +3,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Users, 
-  Mic, 
-  MicOff, 
-  Video, 
-  VideoOff, 
-  PhoneOff, 
   MessageSquare, 
   ScreenShare, 
   StopCircle, 
@@ -23,9 +18,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import DailyVideoCall from './DailyVideoCall';
+import { createDailyRoom, getDailyRoom } from '@/lib/daily';
+import { supabase } from '@/lib/supabase';
 
 interface ClassroomInterfaceProps {
-  bookingId: number;
+  bookingId: string;
   teacherMode?: boolean;
 }
 
@@ -34,8 +32,6 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAudioOn, setIsAudioOn] = useState(true);
-  const [isVideoOn, setIsVideoOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('participants');
@@ -43,56 +39,32 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
   const [chatMessages, setChatMessages] = useState<{ sender: string; message: string; time: string }[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const messageContainerRef = useRef<HTMLDivElement>(null);
-  const mainVideoRef = useRef<HTMLVideoElement>(null);
-  const selfVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Mock participants data for demo
-  const participants = [
-    {
-      id: 1,
-      name: teacherMode ? 'Nguyễn Văn A (Học viên)' : 'Trần Thị B (Giáo viên)',
-      avatar: '',
-      isSpeaking: false,
-      isVideoOn: true,
-      isAudioOn: true,
-    },
-    {
-      id: 2,
-      name: teacherMode ? 'Bạn (Giáo viên)' : 'Bạn (Học viên)',
-      avatar: user?.avatar || '',
-      isSpeaking: true,
-      isVideoOn: isVideoOn,
-      isAudioOn: isAudioOn,
-    }
-  ];
-
-  // Fetch booking details
+  // Fetch booking details and create/join Daily.co room
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
         setLoading(true);
-        // In a real implementation, this would fetch booking details from the API
-        // For demo, we'll use mock data
-        setTimeout(() => {
+        // Fetch booking details from the API (fetch all columns)
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('id', bookingId)
+          .single();
+
+        if (bookingError) throw bookingError;
+
+        // Get or create Daily.co room
+        let roomUrl = await getDailyRoom(bookingId);
+        if (!roomUrl) {
+          roomUrl = await createDailyRoom(bookingId);
+        }
+
           setBookingDetails({
-            id: bookingId,
-            title: 'Buổi học Tiếng Anh cơ bản - Ngữ pháp và từ vựng',
-            teacher: {
-              id: 1,
-              name: 'Trần Thị B',
-              avatar: '',
-            },
-            student: {
-              id: 2,
-              name: 'Nguyễn Văn A',
-              avatar: '',
-            },
-            scheduledStartTime: new Date(Date.now() - 10 * 60000).toISOString(), // 10 minutes ago
-            scheduledEndTime: new Date(Date.now() + 50 * 60000).toISOString(), // 50 minutes from now
-            status: 'in-progress',
+          ...booking,
+          roomUrl,
           });
           setLoading(false);
-        }, 1500);
       } catch (err) {
         setError('Không thể tải thông tin buổi học. Vui lòng thử lại sau.');
         setLoading(false);
@@ -102,92 +74,7 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
     fetchBookingDetails();
   }, [bookingId]);
 
-  // Simulate video stream setup
-  useEffect(() => {
-    // Mock setup of video streams
-    // In a real implementation, this would use WebRTC
-    const setupMockVideoStream = () => {
-      if (selfVideoRef.current) {
-        selfVideoRef.current.poster = 'https://placekitten.com/300/200';
-      }
-      if (mainVideoRef.current) {
-        mainVideoRef.current.poster = 'https://placekitten.com/800/450';
-      }
-    };
-
-    if (!loading && !error) {
-      setupMockVideoStream();
-    }
-  }, [loading, error]);
-
-  // Add default chat messages
-  useEffect(() => {
-    if (!loading && !error) {
-      const initialMessages = [
-        {
-          sender: teacherMode ? 'Nguyễn Văn A' : 'Trần Thị B',
-          message: 'Xin chào, tôi đã sẵn sàng cho buổi học!',
-          time: '12:05',
-        },
-        {
-          sender: 'Bạn',
-          message: 'Chào bạn, tôi cũng đã sẵn sàng',
-          time: '12:06',
-        },
-      ];
-      setChatMessages(initialMessages);
-    }
-  }, [loading, error, teacherMode]);
-
-  // Scroll to bottom when new chat messages are added
-  useEffect(() => {
-    if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
-
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-
-    setChatMessages([
-      ...chatMessages,
-      {
-        sender: 'Bạn',
-        message: messageInput.trim(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-    setMessageInput('');
-  };
-
-  const toggleAudio = () => {
-    // In a real implementation, this would toggle the actual audio stream
-    setIsAudioOn(!isAudioOn);
-    toast({
-      title: !isAudioOn ? 'Đã bật micrô' : 'Đã tắt micrô',
-      duration: 2000,
-    });
-  };
-
-  const toggleVideo = () => {
-    // In a real implementation, this would toggle the actual video stream
-    setIsVideoOn(!isVideoOn);
-    toast({
-      title: !isVideoOn ? 'Đã bật camera' : 'Đã tắt camera',
-      duration: 2000,
-    });
-  };
-
-  const toggleScreenShare = () => {
-    // In a real implementation, this would handle actual screen sharing
-    setIsScreenSharing(!isScreenSharing);
-    toast({
-      title: !isScreenSharing ? 'Đang chia sẻ màn hình' : 'Đã dừng chia sẻ màn hình',
-      duration: 2000,
-    });
-  };
-
-  const handleEndCall = () => {
+  const handleLeaveCall = () => {
     // In a real implementation, this would end the WebRTC connection and redirect
     toast({
       title: 'Kết thúc buổi học',
@@ -256,157 +143,59 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Main video area */}
-        <div className={`flex-1 flex flex-col relative ${isSidebarOpen ? 'pr-80' : ''}`}>
-          {/* Main video stream */}
-          <div className="flex-1 bg-neutral-950 flex items-center justify-center">
-            <video
-              ref={mainVideoRef}
-              className="w-full h-full object-contain"
-              poster={isScreenSharing ? '/path-to-screen-share-placeholder.jpg' : undefined}
-              autoPlay
-              playsInline
-              muted
-            ></video>
-          </div>
-
-          {/* Self video (picture-in-picture) */}
-          <div className="absolute bottom-4 right-4 w-48 h-36 rounded-lg overflow-hidden">
-            <video
-              ref={selfVideoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              playsInline
-              muted
-            ></video>
-            {!isVideoOn && (
-              <div className="absolute inset-0 bg-neutral-800 flex items-center justify-center">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={user?.avatar} />
-                  <AvatarFallback>{user?.fullName?.[0] || 'U'}</AvatarFallback>
-                </Avatar>
-              </div>
-            )}
-          </div>
-
-          {/* Control bar */}
-          <div className="bg-neutral-900 text-white p-3 flex justify-center">
-            <div className="flex space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`rounded-full h-12 w-12 ${!isAudioOn ? 'bg-red-500/20 text-red-500' : 'hover:bg-neutral-800'}`}
-                onClick={toggleAudio}
-              >
-                {isAudioOn ? <Mic size={20} /> : <MicOff size={20} />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`rounded-full h-12 w-12 ${!isVideoOn ? 'bg-red-500/20 text-red-500' : 'hover:bg-neutral-800'}`}
-                onClick={toggleVideo}
-              >
-                {isVideoOn ? <Video size={20} /> : <VideoOff size={20} />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`rounded-full h-12 w-12 ${isScreenSharing ? 'bg-green-500/20 text-green-500' : 'hover:bg-neutral-800'}`}
-                onClick={toggleScreenShare}
-              >
-                {isScreenSharing ? <StopCircle size={20} /> : <ScreenShare size={20} />}
-              </Button>
-              <Button
-                variant="destructive"
-                size="icon"
-                className="rounded-full h-12 w-12"
-                onClick={handleEndCall}
-              >
-                <PhoneOff size={20} />
-              </Button>
-            </div>
-          </div>
+        {/* Video area */}
+        <div className={`flex-1 ${isSidebarOpen ? 'mr-80' : ''} transition-all duration-300`}>
+          {bookingDetails?.roomUrl && (
+            <DailyVideoCall
+              roomUrl={bookingDetails.roomUrl}
+              isTeacher={teacherMode}
+              onLeaveCall={handleLeaveCall}
+            />
+          )}
         </div>
 
-        {/* Sidebar - only visible if isSidebarOpen is true */}
+        {/* Sidebar */}
         {isSidebarOpen && (
-          <div className="w-80 bg-neutral-900 flex flex-col border-l border-neutral-800">
-            <Tabs 
-              defaultValue="participants" 
-              className="flex-1 flex flex-col"
-              value={activeTab}
-              onValueChange={setActiveTab}
-            >
-              <TabsList className="grid grid-cols-3 bg-neutral-800">
-                <TabsTrigger 
-                  value="participants"
-                  className="data-[state=active]:bg-neutral-700"
-                >
-                  <Users size={16} className="mr-2" />
-                  <span>Thành viên</span>
+          <div className="w-80 bg-neutral-900 border-l border-neutral-800 flex flex-col">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+              <TabsList className="w-full justify-start p-2">
+                <TabsTrigger value="participants" className="flex-1">
+                  <Users className="h-4 w-4 mr-2" />
+                  Người tham gia
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="chat"
-                  className="data-[state=active]:bg-neutral-700"
-                >
-                  <MessageSquare size={16} className="mr-2" />
-                  <span>Trò chuyện</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="whiteboard"
-                  className="data-[state=active]:bg-neutral-700"
-                >
-                  <Edit3 size={16} className="mr-2" />
-                  <span>Bảng</span>
+                <TabsTrigger value="chat" className="flex-1">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Chat
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="participants" className="flex-1 flex flex-col p-0">
-                <div className="p-4 text-sm text-white">
-                  <h3 className="font-medium mb-2">Trong buổi học ({participants.length})</h3>
-                  <div className="space-y-2">
-                    {participants.map((participant) => (
-                      <div 
-                        key={participant.id} 
-                        className={`flex items-center justify-between p-2 rounded ${
-                          participant.isSpeaking ? 'bg-neutral-800' : ''
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage src={participant.avatar} />
-                            <AvatarFallback>
-                              {participant.name.charAt(0)}
-                            </AvatarFallback>
+              <TabsContent value="participants" className="flex-1 p-4">
+                {/* Participants list would go here */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <Avatar>
+                      <AvatarImage src={bookingDetails?.teacher?.avatar} />
+                      <AvatarFallback>{bookingDetails?.teacher?.name?.[0]}</AvatarFallback>
                           </Avatar>
-                          <span className="font-medium">{participant.name}</span>
-                        </div>
-                        <div className="flex space-x-1">
-                          {!participant.isAudioOn && <MicOff size={16} className="text-red-500" />}
-                          {!participant.isVideoOn && <VideoOff size={16} className="text-red-500" />}
-                        </div>
+                    <div>
+                      <p className="font-medium">{bookingDetails?.teacher?.name}</p>
+                      <p className="text-sm text-neutral-400">Giáo viên</p>
                       </div>
-                    ))}
                   </div>
-                </div>
-                
-                {teacherMode && (
-                  <div className="mt-auto p-4 border-t border-neutral-800">
-                    <h3 className="font-medium mb-2 text-white text-sm">Tùy chọn</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" size="sm" className="text-xs">
-                        <Settings size={14} className="mr-1" />
-                        Quản lý quyền
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        Ghi buổi học
-                      </Button>
+                  <div className="flex items-center space-x-3">
+                    <Avatar>
+                      <AvatarImage src={bookingDetails?.student?.avatar} />
+                      <AvatarFallback>{bookingDetails?.student?.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{bookingDetails?.student?.name}</p>
+                      <p className="text-sm text-neutral-400">Học viên</p>
                     </div>
                   </div>
-                )}
+                </div>
               </TabsContent>
 
-              <TabsContent value="chat" className="flex-1 flex flex-col p-0 overflow-hidden">
+              <TabsContent value="chat" className="flex-1 flex flex-col p-0">
                 <div 
                   ref={messageContainerRef} 
                   className="flex-1 overflow-y-auto p-4 space-y-3"
@@ -421,40 +210,15 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
                     </div>
                   ))}
                 </div>
-                
-                <div className="p-3 border-t border-neutral-800 mt-auto">
+                <div className="p-4 border-t border-neutral-800">
                   <div className="flex space-x-2">
                     <Input
-                      className="bg-neutral-800 border-neutral-700 text-white"
-                      placeholder="Nhập tin nhắn..."
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
+                      placeholder="Nhập tin nhắn..."
+                      className="flex-1"
                     />
-                    <Button 
-                      size="sm" 
-                      onClick={handleSendMessage}
-                      disabled={!messageInput.trim()}
-                    >
-                      Gửi
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="whiteboard" className="flex-1 p-4">
-                <div className="h-full flex items-center justify-center bg-white rounded-lg">
-                  <div className="text-center p-4">
-                    <Edit3 size={48} className="mx-auto text-neutral-400 mb-4" />
-                    <h3 className="text-neutral-800 font-medium">Bảng trắng tương tác</h3>
-                    <p className="text-neutral-600 text-sm mt-2">
-                      Tính năng này đang được phát triển và sẽ sớm ra mắt.
-                    </p>
+                    <Button>Gửi</Button>
                   </div>
                 </div>
               </TabsContent>

@@ -54,7 +54,7 @@ const TeacherApplicationPage = () => {
     e.preventDefault();
     setLoading(true);
     setStatus('');
-    if (!user) {
+  if (!user) {
       setStatus('Bạn cần đăng nhập để đăng ký.');
       setLoading(false);
       return;
@@ -137,7 +137,7 @@ const TeacherApplicationPage = () => {
             <div className="mb-4 p-3 rounded bg-gray-100">
               <b>Trạng thái đơn đăng ký:</b> {existingApp.status === 'pending' ? 'Đang chờ duyệt' : existingApp.status === 'approved' ? 'Đã duyệt' : 'Bị từ chối'}
             </div>
-          )}
+                )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block font-medium mb-1">Chuyên môn</label>
@@ -148,7 +148,7 @@ const TeacherApplicationPage = () => {
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
                 required
-              />
+                      />
             </div>
             <div>
               <label className="block font-medium mb-1">Kinh nghiệm giảng dạy</label>
@@ -158,7 +158,7 @@ const TeacherApplicationPage = () => {
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
                 required
-              />
+                      />
             </div>
             <div>
               <label className="block font-medium mb-1">Bằng cấp, chứng chỉ</label>
@@ -182,8 +182,8 @@ const TeacherApplicationPage = () => {
             </div>
             <Button type="submit" disabled={loading || (existingApp && existingApp.status === 'pending')}>
               {loading ? "Đang gửi..." : "Gửi đăng ký"}
-            </Button>
-          </form>
+              </Button>
+            </form>
           {status && <div className="mt-4 text-center text-sm text-primary font-medium">{status}</div>}
         </CardContent>
         <div className="flex justify-center border-t pt-6 pb-4">

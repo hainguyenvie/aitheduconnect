@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'wouter';
 import { Helmet } from 'react-helmet';
 import { useAuth } from '@/context/AuthContext';
 import ClassroomInterface from '@/components/classroom/ClassroomInterface';
+import { supabase } from '@/lib/supabaseClient';
 
 const ClassroomPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,14 +18,26 @@ const ClassroomPage = () => {
     }
   }, [isLoading, isAuthenticated, id, setLocation]);
 
-  // Verify booking exists
+  // Verify booking exists and user has access
   useEffect(() => {
     const verifyBooking = async () => {
       try {
-        // In a real app, you would verify the booking exists and belongs to the user
-        // For this demo, we'll accept any ID
-        if (!id || isNaN(Number(id))) {
+        if (!id || !user) {
           setError('ID buổi học không hợp lệ');
+          return;
+        }
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('id, student_id, teacher_id')
+          .eq('id', id)
+          .single();
+        if (error || !data) {
+          setError('ID buổi học không hợp lệ');
+          return;
+        }
+        // Only allow access if user is student or teacher of this booking
+        if (data.student_id !== user.id && data.teacher_id !== user.id) {
+          setError('Bạn không có quyền truy cập buổi học này.');
         }
       } catch (err) {
         setError('Không thể tìm thấy buổi học');
@@ -34,7 +47,7 @@ const ClassroomPage = () => {
     if (isAuthenticated && !isLoading) {
       verifyBooking();
     }
-  }, [id, isAuthenticated, isLoading]);
+  }, [id, isAuthenticated, isLoading, user]);
 
   // Show loading state
   if (isLoading) {
@@ -83,7 +96,7 @@ const ClassroomPage = () => {
       </Helmet>
 
       <ClassroomInterface 
-        bookingId={Number(id)} 
+        bookingId={id}
         teacherMode={user?.role === 'teacher'} 
       />
     </>

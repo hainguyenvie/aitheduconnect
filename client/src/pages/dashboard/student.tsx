@@ -9,6 +9,7 @@ import PaymentCard from "@/components/dashboard/PaymentCard";
 import ScheduleManager from "@/components/dashboard/ScheduleManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, MessageSquare, User, Settings, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const StudentDashboard = () => {
   const [location] = useLocation();
@@ -119,17 +120,29 @@ const StudentDashboard = () => {
         );
       default:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <UpcomingLessons isTeacher={false} />
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Bạn muốn trở thành giáo viên?</CardTitle>
+                <CardDescription>
+                  Đăng ký để trở thành giáo viên và chia sẻ kiến thức của bạn với học viên trên nền tảng!
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild>
+                  <a href="/teacher-application">Đăng ký làm giáo viên</a>
+                </Button>
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <UpcomingLessons isTeacher={false} />
+              </div>
+              <div className="lg:col-span-3">
+                <StudentBookings />
+              </div>
             </div>
-            <div>
-              <PaymentCard isTeacher={false} />
-            </div>
-            <div className="lg:col-span-3">
-              <StudentBookings />
-            </div>
-          </div>
+          </>
         );
     }
   };

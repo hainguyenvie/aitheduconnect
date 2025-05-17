@@ -87,6 +87,11 @@ const DashboardLayout = ({ children, title, description }: DashboardLayoutProps)
           href: "/dashboard/student?tab=bookings",
         },
         {
+          title: "Lớp đã đăng ký",
+          icon: <BookOpen className="h-5 w-5" />,
+          href: "/dashboard/student?tab=registered-classes",
+        },
+        {
           title: "Khóa học",
           icon: <BookOpen className="h-5 w-5" />,
           href: "/dashboard/student?tab=courses",
@@ -183,6 +188,19 @@ const DashboardLayout = ({ children, title, description }: DashboardLayoutProps)
                       >
                         <Settings className="h-5 w-5" />
                         <span>Cài đặt</span>
+                      </a>
+                    </Link>
+                    <Link href="/teacher-application">
+                      <a
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                          location.includes("teacher-application")
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-neutral-lightest"
+                        )}
+                      >
+                        <User className="h-5 w-5" />
+                        <span>Đăng ký làm giáo viên</span>
                       </a>
                     </Link>
                     <Button

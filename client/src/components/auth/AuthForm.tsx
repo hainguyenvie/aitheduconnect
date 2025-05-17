@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import LotusBackground from "@/components/ui/LotusBackground";
+import { supabase } from '@/lib/supabaseClient';
 
 // Login form schema
 const loginSchema = z.object({
@@ -81,9 +82,30 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         navigate(redirectTo);
       } else {
         const { confirmPassword, ...registerData } = data as RegisterFormValues;
-        await register({ ...registerData, role: "student" });
-        
-        // Redirect after successful registration
+        const userCredential = await register({ ...registerData, role: "student" });
+        // Try to get the user id from the register result or from Supabase Auth
+        let userId = userCredential?.user?.id;
+        if (!userId && supabase.auth.getUser) {
+          const { data: authUser } = await supabase.auth.getUser();
+          userId = authUser?.user?.id;
+        }
+        if (userId) {
+          const { error: profileError } = await supabase.from('profiles').insert([
+            {
+              id: userId,
+              full_name: registerData.fullName,
+              role: 'student',
+              avatar: null,
+            },
+          ]);
+          if (profileError) {
+            toast({
+              title: 'Tạo hồ sơ thất bại',
+              description: profileError.message,
+              variant: 'destructive',
+            });
+          }
+        }
         navigate(redirectTo);
       }
     } catch (error) {

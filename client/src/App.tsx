@@ -18,8 +18,8 @@ import CourseDetail from "@/pages/courses/[id]";
 import StudentDashboard from "@/pages/dashboard/student";
 import TeacherDashboard from "@/pages/dashboard/teacher";
 import Messages from "@/pages/messages";
-import ClassroomPage from "@/pages/classroom/classroom-placeholder";
-import ClassroomDetail from "@/pages/classroom/classroom-placeholder";
+import ClassroomPage from "@/pages/classroom/[id]";
+import TestClassroomPage from "@/pages/classroom/test";
 import TeacherApplication from "@/pages/teacher-application";
 import TeacherApplicationReview from "@/pages/admin/teacher-applications";
 import TeacherApplicationDetail from "@/pages/admin/teacher-applications/[id]";
@@ -38,7 +38,7 @@ function Router() {
       <Route path="/dashboard/student" component={StudentDashboard} />
       <Route path="/dashboard/teacher" component={TeacherDashboard} />
       <Route path="/messages" component={Messages} />
-      <Route path="/classroom" component={ClassroomPage} />
+      <Route path="/dashboard/classroom" component={TestClassroomPage} />
       <Route path="/classroom/:id" component={ClassroomPage} />
       <Route path="/teacher-application" component={TeacherApplication} />
       <Route path="/admin/teacher-applications" component={TeacherApplicationReview} />
@@ -56,7 +56,7 @@ function App() {
           <TooltipProvider>
             <div className="min-h-screen flex flex-col">
               <Header />
-              <div className="flex-grow">
+              <div className="flex-grow pt-20 md:pt-20">
                 <Router />
               </div>
               <Footer />

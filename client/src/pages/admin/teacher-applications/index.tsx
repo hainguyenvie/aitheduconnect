@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -36,6 +36,7 @@ import {
   LockKeyhole 
 } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from '@/lib/supabaseClient';
 
 // Kiểu dữ liệu cho đơn đăng ký giáo viên
 type TeacherApplication = {
@@ -53,10 +54,13 @@ type TeacherApplication = {
   };
 };
 
-const TeacherApplicationReview = () => {
+const AdminTeacherApplications = () => {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [applications, setApplications] = useState<TeacherApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState('');
 
   // Kiểm tra xem người dùng có phải là admin không
   if (!user || user.role !== "admin") {
@@ -84,20 +88,35 @@ const TeacherApplicationReview = () => {
     );
   }
 
-  // Lấy danh sách đơn đăng ký
-  const { data: applications, isLoading, refetch } = useQuery({
-    queryKey: ["/api/teacher-applications", statusFilter],
-    queryFn: async () => {
-      const url = statusFilter 
-        ? `/api/teacher-applications?status=${statusFilter}` 
-        : "/api/teacher-applications";
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Không thể lấy danh sách đơn đăng ký");
-      }
-      return response.json() as Promise<TeacherApplication[]>;
-    },
-  });
+  useEffect(() => {
+    const fetchApplications = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('teacher_applications')
+        .select('*, profiles(full_name, email)')
+        .order('created_at', { ascending: false });
+      if (data) setApplications(data);
+      setLoading(false);
+    };
+    fetchApplications();
+  }, [status]);
+
+  const handleReview = async (app, approve) => {
+    setStatus('');
+    // Update application status
+    const { error: appError } = await supabase
+      .from('teacher_applications')
+      .update({ status: approve ? 'approved' : 'rejected' })
+      .eq('id', app.id);
+    if (approve) {
+      // Update user role in profiles
+      await supabase
+        .from('profiles')
+        .update({ role: 'teacher' })
+        .eq('id', app.user_id);
+    }
+    setStatus(approve ? 'Đã duyệt thành công!' : 'Đã từ chối đơn!');
+  };
 
   // Chức năng lọc theo trạng thái
   const handleStatusChange = (value: string) => {
@@ -164,7 +183,7 @@ const TeacherApplicationReview = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {loading ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
               <p>Đang tải danh sách đơn đăng ký...</p>
@@ -178,56 +197,31 @@ const TeacherApplicationReview = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">ID</TableHead>
-                    <TableHead>Tiêu đề</TableHead>
-                    <TableHead>Họ tên</TableHead>
-                    <TableHead className="hidden md:table-cell">Email</TableHead>
-                    <TableHead className="hidden md:table-cell">Ngày nộp</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {applications.map((application) => (
-                    <TableRow key={application.id}>
-                      <TableCell className="font-medium">{application.id}</TableCell>
-                      <TableCell>{application.title}</TableCell>
-                      <TableCell>{application.user?.fullName || "N/A"}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {application.user?.email || "N/A"}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {application.submittedAt ? format(new Date(application.submittedAt), 'dd/MM/yyyy') : "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(application.status)}
-                          {getStatusBadge(application.status)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/admin/teacher-applications/${application.id}`)}
-                        >
-                          Xem chi tiết
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="space-y-6">
+              {applications.map((app) => (
+                <div key={app.id} className="border rounded p-4">
+                  <div><b>Họ tên:</b> {app.profiles?.full_name || 'N/A'}</div>
+                  <div><b>Email:</b> {app.profiles?.email || 'N/A'}</div>
+                  <div><b>Chuyên môn:</b> {app.specialization}</div>
+                  <div><b>Kinh nghiệm:</b> {app.experience}</div>
+                  <div><b>Bằng cấp, chứng chỉ:</b> {app.certificates}</div>
+                  <div><b>Video giới thiệu:</b> {app.intro_video ? <a href={app.intro_video} target="_blank" rel="noopener noreferrer">Xem video</a> : 'Không có'}</div>
+                  <div><b>Trạng thái:</b> {app.status}</div>
+                  {app.status === 'pending' && (
+                    <div className="mt-2 flex gap-2">
+                      <Button onClick={() => handleReview(app, true)} variant="success">Duyệt</Button>
+                      <Button onClick={() => handleReview(app, false)} variant="destructive">Từ chối</Button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
+          {status && <div className="mt-4 text-center text-primary font-medium">{status}</div>}
         </CardContent>
       </Card>
     </div>
   );
 };
 
-export default TeacherApplicationReview;
+export default AdminTeacherApplications;

@@ -388,37 +388,15 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   
   // Fetch teacher profile data
-  const { data: teacher, isLoading } = useQuery({
+  const { data: teacher, isLoading, error } = useQuery({
     queryKey: ['/api/teacher-profiles', teacherId],
+    queryFn: async () => {
+      const res = await fetch(`/api/teacher-profiles/${teacherId}`);
+      if (!res.ok) throw new Error('Failed to fetch teacher');
+      return res.json();
+    },
     enabled: isOpen && teacherId > 0,
   });
-  
-  // Mock teacher data for presentation
-  const mockTeacher = {
-    id: 1,
-    fullName: 'Nguyễn Văn Anh',
-    title: 'Giảng viên Toán cao cấp',
-    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-    hourlyRate: 350000,
-    rating: 4.9,
-    ratingCount: 127,
-    location: 'Hà Nội, Việt Nam',
-    subjects: ['Toán học', 'Đại số', 'Giải tích'],
-    categories: ['Toán học', 'Vật lý'],
-    isVerified: true,
-    experience: '8 năm',
-    education: 'Thạc sĩ Toán học, Đại học Quốc gia Hà Nội',
-    bio: 'Tôi là giảng viên với hơn 8 năm kinh nghiệm giảng dạy Toán học. Tôi đã giúp hơn 500 học sinh đạt điểm cao trong các kỳ thi quan trọng. Phương pháp giảng dạy của tôi tập trung vào việc xây dựng nền tảng vững chắc và phát triển tư duy logic.',
-    availability: [
-      { day: 'Thứ 2', slots: ['18:00 - 19:00', '19:00 - 20:00'] },
-      { day: 'Thứ 3', slots: ['18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00'] },
-      { day: 'Thứ 4', slots: ['19:00 - 20:00'] },
-      { day: 'Thứ 5', slots: ['18:00 - 19:00', '20:00 - 21:00'] },
-      { day: 'Thứ 6', slots: ['18:00 - 19:00', '19:00 - 20:00'] },
-      { day: 'Thứ 7', slots: ['09:00 - 10:00', '10:00 - 11:00', '15:00 - 16:00'] },
-      { day: 'Chủ nhật', slots: ['09:00 - 10:00', '10:00 - 11:00'] },
-    ]
-  };
   
   // Fetch teacher schedules
   const { data: schedules } = useQuery({
@@ -444,6 +422,8 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
   } | null>(null);
   
   if (!isOpen) return null;
+  if (isLoading) return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">Đang tải...</div>;
+  if (error || !teacher) return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">Không tìm thấy giáo viên</div>;
   
   // Render the booking dialog component
   const renderBookingDialog = () => (
@@ -451,7 +431,7 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
       isOpen={isBookingDialogOpen}
       onOpenChange={setIsBookingDialogOpen}
       teacherId={teacherId}
-      teacherName={mockTeacher.fullName}
+      teacherName={teacher.fullName}
     />
   );
   
@@ -594,16 +574,16 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
       <div className="space-y-6 mt-4">
         <div className="flex flex-col md:flex-row gap-6">
           <div className="md:w-1/3 bg-gray-50 p-4 rounded-lg flex flex-col items-center">
-            <div className="text-4xl font-bold text-primary">{mockTeacher.rating}</div>
+            <div className="text-4xl font-bold text-primary">{teacher.rating}</div>
             <div className="flex items-center my-2">
               {[1, 2, 3, 4, 5].map(star => (
                 <Star 
                   key={star}
-                  className={`w-4 h-4 ${star <= Math.round(mockTeacher.rating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                  className={`w-4 h-4 ${star <= Math.round(teacher.rating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
                 />
               ))}
             </div>
-            <div className="text-sm text-gray-600">{mockTeacher.ratingCount} đánh giá</div>
+            <div className="text-sm text-gray-600">{teacher.ratingCount} đánh giá</div>
           </div>
           
           <div className="md:w-2/3">
@@ -694,31 +674,35 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
         </div>
         
         <div className="space-y-4">
-          {mockTeacher.availability.slice(0, isScheduleExpanded ? undefined : 3).map((day, index) => (
-            <div key={index} className="border rounded-lg p-3">
-              <h4 className="font-medium text-sm mb-2">{day.day}</h4>
-              <div className="flex flex-wrap gap-2">
-                {day.slots.map((slot, slotIndex) => (
-                  <Badge 
-                    key={slotIndex} 
-                    variant="secondary"
-                    className="bg-green-100 text-green-800 hover:bg-green-200"
-                  >
-                    {slot}
-                  </Badge>
-                ))}
+          {Array.isArray(teacher.availability) && teacher.availability.length > 0 ? (
+            teacher.availability.slice(0, isScheduleExpanded ? undefined : 3).map((day: { day: string; slots: string[] }, index: number) => (
+              <div key={index} className="border rounded-lg p-3">
+                <h4 className="font-medium text-sm mb-2">{day.day}</h4>
+                <div className="flex flex-wrap gap-2">
+                  {day.slots.map((slot: string, slotIndex: number) => (
+                    <Badge 
+                      key={slotIndex} 
+                      variant="secondary"
+                      className="bg-green-100 text-green-800 hover:bg-green-200"
+                    >
+                      {slot}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-gray-400 text-sm">Chưa cập nhật</div>
+          )}
         </div>
         
-        {!isScheduleExpanded && mockTeacher.availability.length > 3 && (
+        {!isScheduleExpanded && Array.isArray(teacher.availability) && teacher.availability.length > 3 && (
           <Button 
             variant="link" 
             className="mt-2 text-primary"
             onClick={() => setIsScheduleExpanded(true)}
           >
-            Xem thêm {mockTeacher.availability.length - 3} ngày khác
+            Xem thêm {teacher.availability.length - 3} ngày khác
           </Button>
         )}
       </div>
@@ -803,8 +787,8 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                     >
                       <Avatar className="w-24 h-24 border-4 border-white shadow-md">
                         <img 
-                          src={mockTeacher.avatar} 
-                          alt={mockTeacher.fullName}
+                          src={teacher.avatar} 
+                          alt={teacher.fullName}
                           className="w-full h-full object-cover"
                         />
                       </Avatar>
@@ -817,38 +801,42 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                         transition={{ duration: 0.3, delay: 0.1 }}
                       >
                         <div className="flex items-center">
-                          <h2 className="text-2xl font-bold">{mockTeacher.fullName}</h2>
-                          {mockTeacher.isVerified && (
+                          <h2 className="text-2xl font-bold">{teacher.fullName}</h2>
+                          {teacher.isVerified && (
                             <CheckCircle className="h-5 w-5 text-blue-300 ml-2" />
                           )}
                         </div>
-                        <div className="text-pink-100 text-lg py-1">{mockTeacher.title}</div>
+                        <div className="text-pink-100 text-lg py-1">{teacher.title}</div>
                       </motion.div>
                       
                       <div className="flex items-center mt-3 space-x-6">
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-1.5" />
-                          <span>{mockTeacher.location}</span>
+                          <span>{teacher.location}</span>
                         </div>
                         <div className="flex items-center">
                           <Star className="h-4 w-4 mr-1.5 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">{mockTeacher.rating}</span>
-                          <span className="opacity-90 ml-1">({mockTeacher.ratingCount} đánh giá)</span>
+                          <span className="font-medium">{teacher.rating}</span>
+                          <span className="opacity-90 ml-1">({teacher.ratingCount} đánh giá)</span>
                         </div>
                         <div className="flex items-center">
                           <DollarSign className="h-4 w-4 mr-1.5" />
-                          <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(mockTeacher.hourlyRate)}đ/giờ</span>
+                          <span className="font-medium">{new Intl.NumberFormat('vi-VN').format(teacher.hourlyRate)}đ/giờ</span>
                         </div>
                       </div>
                     </div>
                   </div>
                   {/* Subject badges */}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {['Toán học', 'Đại số', 'Giải tích'].map((subject, index) => (
-                      <Badge key={index} className="bg-pink-100 hover:bg-pink-200 text-pink-700 border-0 px-4 py-1.5 rounded-full font-medium">
-                        {subject}
-                      </Badge>
-                    ))}
+                    {Array.isArray(teacher.subjects) && teacher.subjects.length > 0 ? (
+                      teacher.subjects.map((subject: string, index: number) => (
+                        <Badge key={index} className="bg-pink-100 hover:bg-pink-200 text-pink-700 border-0 px-4 py-1.5 rounded-full font-medium">
+                          {subject}
+                        </Badge>
+                      ))
+                    ) : (
+                      <div className="text-gray-400 text-sm">Chưa cập nhật</div>
+                    )}
                   </div>
                 </div>
                 {/* Tabs navigation as direct child of Tabs */}
@@ -868,19 +856,23 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                       <div className="md:col-span-2">
                         <div className="mb-6">
                           <h3 className="text-lg font-medium mb-3">Giới thiệu</h3>
-                          <p className="text-gray-600">{mockTeacher.bio}</p>
+                          <p className="text-gray-600">{teacher.bio || <span className="text-gray-400">Chưa cập nhật</span>}</p>
                         </div>
                         <div className="mb-6">
                           <h3 className="text-lg font-medium mb-3">Chuyên môn</h3>
                           <div className="grid grid-cols-2 gap-4">
-                            {mockTeacher.categories.map((category, idx) => (
-                              <div key={idx} className="flex items-center bg-gray-50 p-3 rounded-lg">
-                                <div className="mr-3 text-primary">
-                                  <Award className="w-5 h-5" />
+                            {Array.isArray(teacher.categories) && teacher.categories.length > 0 ? (
+                              teacher.categories.map((category: string, idx: number) => (
+                                <div key={idx} className="flex items-center bg-gray-50 p-3 rounded-lg">
+                                  <div className="mr-3 text-primary">
+                                    <Award className="w-5 h-5" />
+                                  </div>
+                                  <span>{category}</span>
                                 </div>
-                                <span>{category}</span>
-                              </div>
-                            ))}
+                              ))
+                            ) : (
+                              <div className="text-gray-400 text-sm">Chưa cập nhật</div>
+                            )}
                           </div>
                         </div>
                         <div>
@@ -948,7 +940,7 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                               </div>
                               <div>
                                 <div className="text-sm text-gray-500">Học vấn</div>
-                                <div>{mockTeacher.education}</div>
+                                <div>{teacher.education || <span className="text-gray-400">Chưa cập nhật</span>}</div>
                               </div>
                             </div>
                             <div className="flex">
@@ -957,7 +949,7 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                               </div>
                               <div>
                                 <div className="text-sm text-gray-500">Kinh nghiệm</div>
-                                <div>{mockTeacher.experience}</div>
+                                <div>{teacher.experience || <span className="text-gray-400">Chưa cập nhật</span>}</div>
                               </div>
                             </div>
                             <div className="flex">
@@ -966,7 +958,7 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                               </div>
                               <div className="flex-1">
                                 <div className="text-sm text-gray-500">Chuyên môn</div>
-                                <div className="break-words">{mockTeacher.subjects.join(', ')}</div>
+                                <div className="break-words">{Array.isArray(teacher.subjects) && teacher.subjects.length > 0 ? teacher.subjects.join(', ') : <span className="text-gray-400">Chưa cập nhật</span>}</div>
                               </div>
                             </div>
                             <div className="flex">
@@ -975,9 +967,11 @@ const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalPr
                               </div>
                               <div>
                                 <div className="text-sm text-gray-500">Video giới thiệu</div>
-                                <div className="text-primary hover:text-primary-600 cursor-pointer">
-                                  Xem phần đầu trang
-                                </div>
+                                {teacher.introVideo ? (
+                                  <a href={teacher.introVideo} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 cursor-pointer">Xem video</a>
+                                ) : (
+                                  <span className="text-gray-400">Chưa cập nhật</span>
+                                )}
                               </div>
                             </div>
                           </div>

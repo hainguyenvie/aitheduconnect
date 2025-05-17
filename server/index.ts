@@ -75,8 +75,7 @@ app.use((req, res, next) => {
   const port = 5000;
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host: "0.0.0.0"
   }, () => {
       console.log(`Server is now listening on port ${port}`);
     log(`serving on port ${port}`);

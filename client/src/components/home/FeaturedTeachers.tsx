@@ -34,7 +34,7 @@ interface TeacherResponse {
 
 const FeaturedTeachers = () => {
   const [currentPage, setCurrentPage] = useState(0);
-  const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   
   // Add a type for the API response
@@ -55,8 +55,13 @@ const FeaturedTeachers = () => {
     return <div>Không có giáo viên nào.</div>;
   }
   
-  const openModal = (teacherId: number) => {
-    setSelectedTeacherId(teacherId);
+  const openModal = (teacher: Teacher) => {
+    if (!teacher || !teacher.id) {
+      console.error('Invalid teacher:', teacher);
+      return;
+    }
+    console.log('Open modal for teacher:', teacher);
+    setSelectedTeacher(teacher);
     setModalOpen(true);
   };
   
@@ -109,7 +114,7 @@ const FeaturedTeachers = () => {
     );
   };
   
-  const renderTeacherCard = (teacher: any) => {
+  const renderTeacherCard = (teacher: Teacher) => {
     return (
       <motion.div 
         variants={itemVariants} 
@@ -179,7 +184,7 @@ const FeaturedTeachers = () => {
             <Button 
               variant="outline" 
               className="w-full group-hover:border-primary group-hover:text-primary transition-colors"
-              onClick={() => openModal(teacher.id)}
+              onClick={() => openModal(teacher)}
             >
               Xem chi tiết
             </Button>
@@ -250,7 +255,7 @@ const FeaturedTeachers = () => {
                 key={teacher.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * teacher.id }}
+                transition={{ duration: 0.5, delay: 0.1 }}
                 className="h-full"
               >
                 {renderTeacherCard(teacher)}
@@ -306,9 +311,9 @@ const FeaturedTeachers = () => {
           )}
       
       {/* Teacher detail modal */}
-      {selectedTeacherId && (
+      {selectedTeacher && (
         <TeacherDetailModal
-          teacherId={selectedTeacherId}
+          teacher={selectedTeacher}
           isOpen={modalOpen}
           onClose={closeModal}
         />

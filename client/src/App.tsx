@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "next-themes";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { createContext, useContext, useState } from 'react';
 
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -24,6 +25,10 @@ import TeacherApplication from "@/pages/teacher-application";
 import TeacherApplicationReview from "@/pages/admin/teacher-applications";
 import TeacherApplicationDetail from "@/pages/admin/teacher-applications/[id]";
 import NotFound from "@/pages/not-found";
+
+// Classroom UI Context
+const ClassroomUIContext = createContext({ inClass: false, setInClass: (v: boolean) => {} });
+export const useClassroomUI = () => useContext(ClassroomUIContext);
 
 function Router() {
   return (
@@ -49,19 +54,30 @@ function Router() {
 }
 
 function App() {
+  const [inClass, setInClass] = useState(false);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <div className="flex-grow pt-20 md:pt-20">
-                <Router />
+            {/* Global style to hide any header if inClass */}
+            {inClass && (
+              <style>{`
+                header, .fixed-header, [role="banner"], .Header, .header, .main-header {
+                  display: none !important;
+                }
+              `}</style>
+            )}
+            <ClassroomUIContext.Provider value={{ inClass, setInClass }}>
+              <div className={`min-h-screen flex flex-col${inClass ? ' hide-header' : ''}`}>
+                {!inClass && <Header />}
+                <div className={inClass ? '' : 'flex-grow pt-20 md:pt-20'}>
+                  <Router />
+                </div>
+                {!inClass && <Footer />}
+                <Toaster />
               </div>
-              <Footer />
-              <Toaster />
-            </div>
+            </ClassroomUIContext.Provider>
           </TooltipProvider>
         </ThemeProvider>
       </AuthProvider>

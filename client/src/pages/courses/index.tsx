@@ -31,6 +31,46 @@ const categories = [
   { value: "art", label: "Nghệ thuật" },
 ];
 
+// Sample/mock data for demo
+const sampleCourses = [
+  {
+    id: 1,
+    title: 'Toán Cao Cấp Cơ Bản',
+    category: 'mathematics',
+    rating: 4.8,
+    ratingCount: 120,
+    price: 2500000,
+    enrolledStudents: 80,
+    totalSessions: 10,
+    teacher: { user: { fullName: 'Nguyễn Văn A', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' } },
+    description: 'Khóa học nền tảng toán cao cấp cho học sinh, sinh viên.',
+  },
+  {
+    id: 2,
+    title: 'Lập trình Python cơ bản',
+    category: 'programming',
+    rating: 4.6,
+    ratingCount: 95,
+    price: 1800000,
+    enrolledStudents: 120,
+    totalSessions: 8,
+    teacher: { user: { fullName: 'Trần Thị B', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' } },
+    description: 'Học lập trình Python từ cơ bản đến ứng dụng thực tế.',
+  },
+  {
+    id: 3,
+    title: 'Tiếng Anh giao tiếp',
+    category: 'languages',
+    rating: 4.9,
+    ratingCount: 200,
+    price: 2200000,
+    enrolledStudents: 150,
+    totalSessions: 12,
+    teacher: { user: { fullName: 'Lê Văn C', avatar: 'https://randomuser.me/api/portraits/men/67.jpg' } },
+    description: 'Khóa học tiếng Anh giao tiếp cho người mới bắt đầu.',
+  },
+];
+
 const CoursesIndex = () => {
   const [location, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -48,18 +88,24 @@ const CoursesIndex = () => {
   const { data: courses, isLoading, error } = useQuery({
     queryKey: ["/api/courses", selectedCategory],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedCategory) {
-        params.set("category", selectedCategory);
+      try {
+        const params = new URLSearchParams();
+        if (selectedCategory) {
+          params.set("category", selectedCategory);
+        }
+        const queryString = params.toString();
+        const response = await fetch(`/api/courses${queryString ? `?${queryString}` : ""}`);
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        if (!Array.isArray(data) || data.length === 0) throw new Error();
+        return data;
+      } catch {
+        // Fallback to sample data
+        if (selectedCategory) {
+          return sampleCourses.filter(c => c.category === selectedCategory);
+        }
+        return sampleCourses;
       }
-      const queryString = params.toString();
-      const response = await fetch(`/api/courses${queryString ? `?${queryString}` : ""}`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch courses");
-      }
-      
-      return response.json();
     }
   });
 

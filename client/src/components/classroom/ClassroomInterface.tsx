@@ -21,6 +21,8 @@ import { Separator } from '@/components/ui/separator';
 import DailyVideoCall from './DailyVideoCall';
 import { createDailyRoom, getDailyRoom } from '@/lib/daily';
 import { supabase } from '@/lib/supabase';
+import Logo from '@/components/ui/Logo';
+import { useClassroomUI } from '@/App';
 
 interface ClassroomInterfaceProps {
   bookingId: string;
@@ -30,6 +32,7 @@ interface ClassroomInterfaceProps {
 const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfaceProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { inClass, setInClass } = useClassroomUI();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -74,6 +77,11 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
     fetchBookingDetails();
   }, [bookingId]);
 
+  useEffect(() => {
+    setInClass(true);
+    return () => setInClass(false);
+  }, [setInClass]);
+
   const handleLeaveCall = () => {
     // In a real implementation, this would end the WebRTC connection and redirect
     toast({
@@ -111,121 +119,12 @@ const ClassroomInterface = ({ bookingId, teacherMode = false }: ClassroomInterfa
   }
 
   return (
-    <div className="h-screen bg-black flex flex-col">
-      {/* Top bar with call info */}
-      <div className="bg-neutral-900 text-white p-3 flex justify-between items-center">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            {isSidebarOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
-          </Button>
-          <h2 className="ml-2 text-lg font-medium truncate">
-            {bookingDetails?.title || 'Buổi học trực tuyến'}
-          </h2>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="rounded-full bg-red-500 px-2 py-1 text-xs">
-            Đang live
-          </span>
-          <span className="text-xs">
-            {bookingDetails && new Date(bookingDetails.scheduledEndTime).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}{' '}
-            kết thúc
-          </span>
-        </div>
-      </div>
-
-      {/* Main content area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Video area */}
-        <div className={`flex-1 ${isSidebarOpen ? 'mr-80' : ''} transition-all duration-300`}>
-          {bookingDetails?.roomUrl && (
-            <DailyVideoCall
-              roomUrl={bookingDetails.roomUrl}
-              isTeacher={teacherMode}
-              onLeaveCall={handleLeaveCall}
-            />
-          )}
-        </div>
-
-        {/* Sidebar */}
-        {isSidebarOpen && (
-          <div className="w-80 bg-neutral-900 border-l border-neutral-800 flex flex-col">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-              <TabsList className="w-full justify-start p-2">
-                <TabsTrigger value="participants" className="flex-1">
-                  <Users className="h-4 w-4 mr-2" />
-                  Người tham gia
-                </TabsTrigger>
-                <TabsTrigger value="chat" className="flex-1">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Chat
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="participants" className="flex-1 p-4">
-                {/* Participants list would go here */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={bookingDetails?.teacher?.avatar} />
-                      <AvatarFallback>{bookingDetails?.teacher?.name?.[0]}</AvatarFallback>
-                          </Avatar>
-                    <div>
-                      <p className="font-medium">{bookingDetails?.teacher?.name}</p>
-                      <p className="text-sm text-neutral-400">Giáo viên</p>
-                      </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={bookingDetails?.student?.avatar} />
-                      <AvatarFallback>{bookingDetails?.student?.name?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{bookingDetails?.student?.name}</p>
-                      <p className="text-sm text-neutral-400">Học viên</p>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="chat" className="flex-1 flex flex-col p-0">
-                <div 
-                  ref={messageContainerRef} 
-                  className="flex-1 overflow-y-auto p-4 space-y-3"
-                >
-                  {chatMessages.map((msg, index) => (
-                    <div key={index} className="flex flex-col">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-white">{msg.sender}</span>
-                        <span className="text-neutral-400 text-xs">{msg.time}</span>
-                      </div>
-                      <p className="mt-1 text-white">{msg.message}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-4 border-t border-neutral-800">
-                  <div className="flex space-x-2">
-                    <Input
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      placeholder="Nhập tin nhắn..."
-                      className="flex-1"
-                    />
-                    <Button>Gửi</Button>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-      </div>
+    <div className="fixed inset-0 w-screen h-screen bg-black z-[9999]">
+      <DailyVideoCall
+        roomUrl={bookingDetails?.roomUrl}
+        isTeacher={teacherMode}
+        onLeaveCall={handleLeaveCall}
+      />
     </div>
   );
 };

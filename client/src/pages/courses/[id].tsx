@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import { format } from "date-fns";
@@ -35,360 +34,66 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Star, BookOpen, Clock, Users, CheckCircle, MessageSquare, Video, Upload, FileText, ClipboardList, ChevronDown, ChevronUp } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { createClient } from '@supabase/supabase-js';
 
-// Sample data for demonstration
-const sampleCourse = {
-  id: 1,
-  title: 'Toán Cao Cấp Cơ Bản',
-  objectives: [
-    'Nắm vững kiến thức nền tảng về toán cao cấp',
-    'Áp dụng vào giải quyết các bài toán thực tế',
-    'Chuẩn bị tốt cho các kỳ thi đại học',
-  ],
-  targetAudience: 'Học sinh THPT, sinh viên năm nhất, người muốn củng cố kiến thức toán.',
-  teacher: {
-    name: 'Nguyễn Văn A',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    bio: 'Giảng viên Toán với 10 năm kinh nghiệm luyện thi đại học.',
-    rating: 4.9,
-    title: 'Thạc sĩ Toán học',
-    experience: '10 năm kinh nghiệm luyện thi đại học.'
-  },
-  modules: [
-    {
-      id: 1,
-      title: 'Giới thiệu & Ôn tập kiến thức nền',
-      lessons: [
-        {
-          id: 1,
-          title: 'Tập hợp, số thực, bất đẳng thức',
-          contents: [
-            { type: 'video', title: 'Video giới thiệu', url: 'https://www.youtube.com/embed/5MgBikgcWnY' },
-            { type: 'reading', title: 'Tài liệu PDF: Tập hợp và số thực', url: '#' },
-            { type: 'assignment', title: 'Bài tập 1: Tập hợp', description: 'Giải các bài tập về tập hợp và nộp lại file PDF.' },
-            { type: 'slide', title: 'Slide: Bất đẳng thức cơ bản', url: '#' },
-            { type: 'assignment', title: 'Bài tập 2: Bất đẳng thức', description: 'Làm bài tập về bất đẳng thức, nộp file ảnh hoặc PDF.' },
-          ],
-          subToc: [
-            'Khái niệm tập hợp',
-            'Các phép toán trên tập hợp',
-            'Số thực và tính chất',
-          ],
-        },
-        {
-          id: 2,
-          title: 'Hàm số và đồ thị',
-          contents: [
-            { type: 'reading', title: 'Tài liệu đọc: Hàm số', url: '#' },
-            { type: 'slide', title: 'Slide: Đồ thị hàm số', url: '#' },
-            { type: 'assignment', title: 'Bài tập: Hàm số', description: 'Giải các bài tập về hàm số.' },
-          ],
-          subToc: [
-            'Định nghĩa hàm số',
-            'Đồ thị hàm số bậc nhất',
-          ],
-        },
-      ],
-    },
-    {
-      id: 2,
-      title: 'Đạo hàm & Ứng dụng',
-      lessons: [
-        {
-          id: 3,
-          title: 'Đạo hàm cơ bản',
-          contents: [
-            { type: 'video', title: 'Video: Đạo hàm cơ bản', url: 'https://www.youtube.com/embed/2vj37yeQQHg' },
-            { type: 'slide', title: 'Slide: Đạo hàm và ứng dụng', url: '#' },
-            { type: 'assignment', title: 'Bài tập: Đạo hàm', description: 'Tính đạo hàm các hàm số sau và nộp file ảnh hoặc PDF.' },
-          ],
-          subToc: ['Định nghĩa đạo hàm', 'Quy tắc tính đạo hàm'],
-        },
-        {
-          id: 4,
-          title: 'Ứng dụng của đạo hàm',
-          contents: [
-            { type: 'reading', title: 'Tài liệu PDF: Ứng dụng đạo hàm', url: '#' },
-            { type: 'assignment', title: 'Bài tập: Ứng dụng đạo hàm', description: 'Bài tập ứng dụng đạo hàm trong thực tế.' },
-          ],
-          subToc: ['Cực trị', 'Giá trị lớn nhất, nhỏ nhất'],
-        },
-      ],
-    },
-  ],
-};
-
-const sampleIndependentAssignment = {
-  title: 'Bài tập tự do: Ôn tập cuối kỳ',
-  description: 'Làm bài tập tổng hợp cuối kỳ và nộp lại file PDF hoặc DOCX.',
-};
-
-// Sample/mock data for demo
-const sampleCourses = [
-  {
-    id: 1,
-    title: 'Toán Cao Cấp Cơ Bản',
-    rating: 4.8,
-    ratingCount: 120,
-    enrolledStudents: 80,
-    totalSessions: 10,
-    assignmentsCount: 5,
-    avgSessionDuration: 90, // in minutes
-    introVideo: 'https://www.youtube.com/embed/5MgBikgcWnY',
-    objectives: [
-      'Nắm vững kiến thức nền tảng về toán cao cấp',
-      'Áp dụng vào giải quyết các bài toán thực tế',
-      'Chuẩn bị tốt cho các kỳ thi đại học',
-    ],
-    targetAudience: 'Học sinh THPT, sinh viên năm nhất, người muốn củng cố kiến thức toán.',
-    teacher: {
-      name: 'Nguyễn Văn A',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      bio: 'Giảng viên Toán với 10 năm kinh nghiệm luyện thi đại học.',
-      rating: 4.9,
-      title: 'Thạc sĩ Toán học',
-      experience: '10 năm kinh nghiệm luyện thi đại học.'
-    },
-    modules: [
-      {
-        id: 1,
-        title: 'Giới thiệu & Ôn tập kiến thức nền',
-        lessons: [
-          {
-            id: 1,
-            title: 'Tập hợp, số thực, bất đẳng thức',
-            contents: [
-              { type: 'video', title: 'Video giới thiệu', url: 'https://www.youtube.com/embed/5MgBikgcWnY' },
-              { type: 'reading', title: 'Tài liệu PDF: Tập hợp và số thực', url: '#' },
-              { type: 'assignment', title: 'Bài tập 1: Tập hợp', description: 'Giải các bài tập về tập hợp và nộp lại file PDF.' },
-              { type: 'slide', title: 'Slide: Bất đẳng thức cơ bản', url: '#' },
-              { type: 'assignment', title: 'Bài tập 2: Bất đẳng thức', description: 'Làm bài tập về bất đẳng thức, nộp file ảnh hoặc PDF.' },
-            ],
-            subToc: [
-              'Khái niệm tập hợp',
-              'Các phép toán trên tập hợp',
-              'Số thực và tính chất',
-            ],
-          },
-          {
-            id: 2,
-            title: 'Hàm số và đồ thị',
-            contents: [
-              { type: 'reading', title: 'Tài liệu đọc: Hàm số', url: '#' },
-              { type: 'slide', title: 'Slide: Đồ thị hàm số', url: '#' },
-              { type: 'assignment', title: 'Bài tập: Hàm số', description: 'Giải các bài tập về hàm số.' },
-            ],
-            subToc: [
-              'Định nghĩa hàm số',
-              'Đồ thị hàm số bậc nhất',
-            ],
-          },
-        ],
-      },
-      {
-        id: 2,
-        title: 'Đạo hàm & Ứng dụng',
-        lessons: [
-          {
-            id: 3,
-            title: 'Đạo hàm cơ bản',
-            contents: [
-              { type: 'video', title: 'Video: Đạo hàm cơ bản', url: 'https://www.youtube.com/embed/2vj37yeQQHg' },
-              { type: 'slide', title: 'Slide: Đạo hàm và ứng dụng', url: '#' },
-              { type: 'assignment', title: 'Bài tập: Đạo hàm', description: 'Tính đạo hàm các hàm số sau và nộp file ảnh hoặc PDF.' },
-            ],
-            subToc: ['Định nghĩa đạo hàm', 'Quy tắc tính đạo hàm'],
-          },
-          {
-            id: 4,
-            title: 'Ứng dụng của đạo hàm',
-            contents: [
-              { type: 'reading', title: 'Tài liệu PDF: Ứng dụng đạo hàm', url: '#' },
-              { type: 'assignment', title: 'Bài tập: Ứng dụng đạo hàm', description: 'Bài tập ứng dụng đạo hàm trong thực tế.' },
-            ],
-            subToc: ['Cực trị', 'Giá trị lớn nhất, nhỏ nhất'],
-          },
-        ],
-      },
-    ],
-    independentAssignments: [
-      {
-        title: 'Bài tập tự do: Ôn tập cuối kỳ',
-        description: 'Làm bài tập tổng hợp cuối kỳ và nộp lại file PDF hoặc DOCX.',
-      },
-      {
-        title: 'Bài tập nâng cao',
-        description: 'Bài tập nâng cao dành cho học sinh khá giỏi.',
-      },
-    ],
-    reviews: [
-      {
-        id: 1,
-        student: { fullName: 'Lê Thị Hồng', avatar: 'https://randomuser.me/api/portraits/women/65.jpg' },
-        rating: 5,
-        comment: 'Khóa học rất bổ ích, thầy dạy dễ hiểu và nhiệt tình!',
-        createdAt: '2024-05-01T10:00:00Z',
-      },
-      {
-        id: 2,
-        student: { fullName: 'Nguyễn Văn B', avatar: 'https://randomuser.me/api/portraits/men/45.jpg' },
-        rating: 4.5,
-        comment: 'Nội dung phong phú, có nhiều bài tập thực hành.',
-        createdAt: '2024-05-03T14:30:00Z',
-      },
-      {
-        id: 3,
-        student: { fullName: 'Phạm Minh Châu', avatar: 'https://randomuser.me/api/portraits/women/22.jpg' },
-        rating: 4,
-        comment: 'Khóa học phù hợp cho người mới bắt đầu.',
-        createdAt: '2024-05-05T09:15:00Z',
-      },
-    ],
-  },
-  // Added sample course with id: 3
-  {
-    id: 3,
-    title: 'Vật Lý Cơ Bản',
-    rating: 4.5,
-    ratingCount: 42,
-    objectives: [
-      'Hiểu các khái niệm cơ bản về vật lý',
-      'Áp dụng kiến thức vào thực tế',
-      'Chuẩn bị cho các kỳ thi vật lý',
-    ],
-    targetAudience: 'Học sinh THPT, sinh viên năm nhất, người muốn củng cố kiến thức vật lý.',
-    teacher: {
-      name: 'Trần Thị B',
-      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      bio: 'Giảng viên Vật Lý với 8 năm kinh nghiệm.',
-      rating: 4.7,
-      title: 'Thạc sĩ Vật Lý',
-      experience: '8 năm kinh nghiệm giảng dạy vật lý.'
-    },
-    modules: [
-      {
-        id: 1,
-        title: 'Cơ học',
-        lessons: [
-          {
-            id: 1,
-            title: 'Chuyển động thẳng đều',
-            video: '',
-            reading: 'Tài liệu PDF: Chuyển động thẳng đều',
-            slides: '',
-            assignment: null,
-            subToc: [],
-          },
-        ],
-      },
-    ],
-    independentAssignments: [
-      {
-        title: 'Bài tập tự do: Ôn tập chương 1',
-        description: 'Làm bài tập tổng hợp chương 1 và nộp lại file PDF.',
-      },
-    ],
-  },
-  // Add more sample courses as needed
-  {
-    id: 2,
-    title: 'Lập trình Python cơ bản',
-    rating: 4.6,
-    ratingCount: 95,
-    objectives: [
-      'Nắm vững cú pháp cơ bản của Python',
-      'Viết được các chương trình đơn giản',
-      'Áp dụng Python vào giải quyết các bài toán thực tế',
-    ],
-    targetAudience: 'Người mới bắt đầu học lập trình, học sinh, sinh viên.',
-    teacher: {
-      name: 'Trần Thị B',
-      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      bio: 'Giảng viên lập trình Python với 5 năm kinh nghiệm.',
-      rating: 4.8,
-      title: 'Kỹ sư phần mềm',
-      experience: '5 năm giảng dạy lập trình Python.'
-    },
-    modules: [
-      {
-        id: 1,
-        title: 'Giới thiệu Python',
-        lessons: [
-          {
-            id: 1,
-            title: 'Lịch sử và ứng dụng của Python',
-            video: '',
-            reading: 'Tài liệu PDF: Giới thiệu Python',
-            slides: '',
-            assignment: null,
-            subToc: ['Lịch sử Python', 'Ứng dụng thực tế'],
-          },
-        ],
-      },
-      {
-        id: 2,
-        title: 'Cú pháp cơ bản',
-        lessons: [
-          {
-            id: 2,
-            title: 'Biến, kiểu dữ liệu, toán tử',
-            video: '',
-            reading: 'Tài liệu PDF: Biến và kiểu dữ liệu',
-            slides: '',
-            assignment: {
-              title: 'Bài tập biến và kiểu dữ liệu',
-              description: 'Làm bài tập về biến và kiểu dữ liệu, nộp file .py',
-              file: '',
-            },
-            subToc: ['Biến', 'Kiểu dữ liệu', 'Toán tử'],
-          },
-        ],
-      },
-    ],
-    independentAssignments: [
-      {
-        title: 'Bài tập tự do: Ứng dụng Python',
-        description: 'Viết một chương trình Python giải quyết một bài toán thực tế.',
-      },
-    ],
-  },
-];
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const CourseDetail = () => {
   const [, params] = useRoute("/courses/:id");
   const [, setLocation] = useLocation();
-  const courseId = params?.id ? Number(params.id) : null;
-  console.log("CourseDetail: courseId from URL:", courseId);
+  const courseId = params?.id || null;
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  
+
   // State for enrollment
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [course, setCourse] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch course
-  const { data: course, isLoading, error } = useQuery({
-    queryKey: [`/api/courses/${courseId}`],
-    queryFn: async () => {
-      try {
-        if (!courseId) throw new Error("Invalid course ID");
-        const response = await fetch(`/api/courses/${courseId}`);
-        if (!response.ok) throw new Error();
-        const data = await response.json();
-        if (!data || !data.id) throw new Error();
-        return data;
-      } catch {
-        // Fallback to sample data
-        const fallbackCourse = sampleCourses.find(c => c.id === Number(courseId));
-        console.log("CourseDetail: fallbackCourse from sampleCourses:", fallbackCourse);
-        return fallbackCourse;
+  // Curriculum/lesson toggling state
+  const [openStates, setOpenStates] = useState<boolean[]>([]);
+  useEffect(() => {
+    if (course && course.modules && Array.isArray(course.modules)) {
+      // Flatten all lessons from all modules
+      const allLessons = course.modules.flatMap((module: any) => module.lessons || []);
+      setOpenStates(Array(allLessons.length).fill(true));
+    }
+  }, [course]);
+  const handleToggle = (idx: number) => {
+    setOpenStates((prev) => prev.map((open, i) => i === idx ? !open : open));
+  };
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      setIsLoading(true);
+      setError(null);
+      if (!courseId) {
+        setError("Invalid course ID");
+        setIsLoading(false);
+        return;
       }
-    },
-    enabled: !!courseId,
-  });
+      const { data, error } = await supabase
+        .from('courses')
+        .select(`*, teachers:teacher_profile_id (id, full_name, title, avatar, rating, rating_count, bio, education, experience)`)
+        .eq('id', courseId)
+        .single();
+      if (error || !data) {
+        setError('Không thể tải thông tin khóa học. Khóa học không tồn tại hoặc đã bị xóa.');
+        setCourse(null);
+      } else {
+        setCourse(data);
+      }
+      setIsLoading(false);
+    };
+    fetchCourse();
+  }, [courseId]);
 
   // Format price in Vietnamese currency
   const formatPrice = (price: number) => {
@@ -409,7 +114,6 @@ const CourseDetail = () => {
       science: "Khoa học",
       art: "Nghệ thuật",
     };
-    
     return categories[category] || category;
   };
 
@@ -424,22 +128,17 @@ const CourseDetail = () => {
       setLocation("/login");
       return;
     }
-
     try {
       setIsEnrolling(true);
-      
-      // Create booking for the course
-      await apiRequest("POST", "/api/bookings", {
-        teacherProfileId: course.teacher.id,
-        courseId: courseId,
-      });
-
+      // Create booking for the course (update this to use your real API if needed)
+      // await apiRequest("POST", "/api/bookings", {
+      //   teacherProfileId: course.teachers.id,
+      //   courseId: courseId,
+      // });
       toast({
         title: "Đăng ký thành công",
         description: "Bạn đã đăng ký khóa học thành công. Vui lòng thanh toán để bắt đầu học.",
       });
-
-      // Close dialog and redirect to dashboard
       setEnrollDialog(false);
       setLocation("/dashboard/student");
     } catch (error) {
@@ -456,10 +155,8 @@ const CourseDetail = () => {
   // Get initials for avatar
   const getInitials = (name: string) => {
     return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+      ? name.split(" ").map((n) => n[0]).join("").toUpperCase()
+      : "?";
   };
 
   // Get rating stars
@@ -467,7 +164,6 @@ const CourseDetail = () => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
     return (
       <div className="flex">
         {[...Array(fullStars)].map((_, i) => (
@@ -486,16 +182,6 @@ const CourseDetail = () => {
     );
   };
 
-  // After the useQuery call, before the error check
-  console.log("CourseDetail: final course value:", course);
-
-  // Flatten all lessons from all modules for curriculum tab
-  const allLessons = course?.modules ? course.modules.flatMap((module: any) => module.lessons) : [];
-  const [openStates, setOpenStates] = useState<boolean[]>(Array(allLessons.length).fill(true));
-  const handleToggle = (idx: number) => {
-    setOpenStates((prev) => prev.map((open, i) => i === idx ? !open : open));
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -510,7 +196,6 @@ const CourseDetail = () => {
   }
 
   if (error || !course) {
-    // If not found in sample data, show error
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -532,7 +217,7 @@ const CourseDetail = () => {
     <>
       <Helmet>
         <title>{course.title} - EduViet</title>
-        <meta name="description" content={`Khóa học ${course.title} do giáo viên ${course.teacher?.user?.fullName || "chuyên nghiệp"} giảng dạy. ${course.description?.substring(0, 150) || ""}`} />
+        <meta name="description" content={`Khóa học ${course.title} do giáo viên ${course.teachers?.full_name || "chuyên nghiệp"} giảng dạy. ${course.description?.substring(0, 150) || ""}`} />
       </Helmet>
       
       <div className="min-h-screen flex flex-col">
@@ -571,7 +256,7 @@ const CourseDetail = () => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="flex items-center">
                       {getRatingStars(course.rating)}
-                      <span className="ml-2">{course.rating.toFixed(1)} ({course.ratingCount} đánh giá)</span>
+                      <span className="ml-2">{course.rating.toFixed(1)} ({course.rating_count} đánh giá)</span>
                     </div>
                     <div className="flex items-center">
                       <BookOpen className="w-4 h-4 mr-1" />
@@ -584,14 +269,14 @@ const CourseDetail = () => {
                   </div>
                   <div className="flex items-center">
                     <Avatar className="h-10 w-10 mr-2">
-                      <AvatarImage src={course.teacher?.user?.avatar || course.teacher?.avatar} />
+                      <AvatarImage src={course.teachers?.avatar} />
                       <AvatarFallback>
-                        {course.teacher?.user?.fullName ? getInitials(course.teacher.user.fullName) : getInitials(course.teacher?.name || "GV")}
+                        {course.teachers?.full_name ? getInitials(course.teachers.full_name) : getInitials(course.teachers?.name || "GV")}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="text-sm opacity-80">Giáo viên</p>
-                      <p className="font-medium">{course.teacher?.user?.fullName || course.teacher?.name}</p>
+                      <p className="font-medium">{course.teachers?.full_name || course.teachers?.name}</p>
                     </div>
                   </div>
                 </div>
@@ -676,7 +361,7 @@ const CourseDetail = () => {
                     </div>
                     <div className="flex flex-col items-center">
                       <Users className="w-7 h-7 text-primary mb-1" />
-                      <span className="font-bold text-lg">{course.ratingCount}</span>
+                      <span className="font-bold text-lg">{course.rating_count}</span>
                       <span className="text-xs text-neutral-dark">Lượt đánh giá</span>
                     </div>
                   </div>
@@ -930,12 +615,12 @@ const CourseDetail = () => {
                                   <Avatar className="w-10 h-10">
                                     <AvatarImage src={review.student?.avatar} />
                                     <AvatarFallback>
-                                      {review.student?.fullName ? getInitials(review.student.fullName) : "HV"}
+                                      {review.student?.full_name ? getInitials(review.student.full_name) : "HV"}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
                                     <div className="flex items-center gap-2">
-                                      <h4 className="font-medium">{review.student?.fullName}</h4>
+                                      <h4 className="font-medium">{review.student?.full_name}</h4>
                                       <span className="text-xs text-neutral-medium">
                                         {format(new Date(review.createdAt), "dd MMMM, yyyy", { locale: vi })}
                                       </span>
@@ -973,23 +658,23 @@ const CourseDetail = () => {
                   <CardContent>
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="h-16 w-16">
-                        <AvatarImage src={course.teacher?.user?.avatar} />
+                        <AvatarImage src={course.teachers?.avatar} />
                         <AvatarFallback className="text-xl">
-                          {course.teacher?.user?.fullName ? getInitials(course.teacher.user.fullName) : "GV"}
+                          {course.teachers?.full_name ? getInitials(course.teachers.full_name) : "GV"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-bold">{course.teacher?.user?.fullName}</h3>
-                        <p className="text-sm text-neutral-dark">{course.teacher?.title}</p>
+                        <h3 className="font-bold">{course.teachers?.full_name}</h3>
+                        <p className="text-sm text-neutral-dark">{course.teachers?.title}</p>
                         <div className="flex items-center mt-1">
                           <Star className="w-4 h-4 text-[#ffd60a] fill-[#ffd60a] mr-1" />
-                          <span className="text-sm">{course.teacher?.rating.toFixed(1)}</span>
+                          <span className="text-sm">{course.teachers?.rating.toFixed(1)}</span>
                         </div>
                       </div>
                     </div>
                     
                     <p className="text-neutral-dark mb-4">
-                      {course.teacher?.experience || "Giáo viên có nhiều năm kinh nghiệm giảng dạy trong lĩnh vực chuyên môn."}
+                      {course.teachers?.experience || "Giáo viên có nhiều năm kinh nghiệm giảng dạy trong lĩnh vực chuyên môn."}
                     </p>
                     
                     <Button
@@ -997,7 +682,7 @@ const CourseDetail = () => {
                       variant="outline"
                       className="w-full"
                     >
-                      <a href={`/teachers/${course.teacher?.id}`}>Xem hồ sơ giáo viên</a>
+                      <a href={`/teachers/${course.teachers?.id}`}>Xem hồ sơ giáo viên</a>
                     </Button>
                   </CardContent>
                 </Card>
@@ -1046,12 +731,12 @@ const CourseDetail = () => {
                   <p className="text-sm font-medium">Giáo viên:</p>
                   <div className="flex items-center">
                     <Avatar className="w-8 h-8 mr-2">
-                      <AvatarImage src={course.teacher?.user?.avatar} />
+                      <AvatarImage src={course.teachers?.avatar} />
                       <AvatarFallback>
-                        {course.teacher?.user?.fullName ? getInitials(course.teacher.user.fullName) : "GV"}
+                        {course.teachers?.full_name ? getInitials(course.teachers.full_name) : "GV"}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{course.teacher?.user?.fullName}</span>
+                    <span>{course.teachers?.full_name}</span>
                   </div>
                 </div>
                 

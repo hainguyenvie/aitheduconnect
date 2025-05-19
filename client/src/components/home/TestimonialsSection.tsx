@@ -61,7 +61,7 @@ const TestimonialsSection = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-3">Học viên nói gì về chúng tôi</h2>
           <p className="text-neutral-dark max-w-2xl mx-auto">
-            Trải nghiệm và phản hồi từ những học viên đã và đang học tập trên nền tảng EduViet
+            Trải nghiệm và phản hồi từ những học viên đã và đang học tập trên nền tảng AithEduConnect
           </p>
         </div>
         

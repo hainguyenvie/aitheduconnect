@@ -32,8 +32,8 @@ const MessagesPage = () => {
   return (
     <>
       <Helmet>
-        <title>Tin nhắn | EduViet</title>
-        <meta name="description" content="Kênh liên lạc với giáo viên/học viên của bạn trên nền tảng EduViet" />
+        <title>Tin nhắn | AithEduConnect</title>
+        <meta name="description" content="Kênh liên lạc với giáo viên/học viên của bạn trên nền tảng AithEduConnect" />
       </Helmet>
 
       <div className="flex flex-col min-h-screen">

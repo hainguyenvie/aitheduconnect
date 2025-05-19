@@ -82,8 +82,8 @@ const ClassroomPage = () => {
   return (
     <>
       <Helmet>
-        <title>Buổi học trực tuyến | EduViet</title>
-        <meta name="description" content="Lớp học trực tuyến trên EduViet" />
+        <title>Buổi học trực tuyến | AithEduConnect</title>
+        <meta name="description" content="Lớp học trực tuyến trên AithEduConnect" />
         <style>
           {`
             body {

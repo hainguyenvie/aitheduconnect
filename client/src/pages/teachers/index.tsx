@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as z from 'zod';
+import { createClient } from '@supabase/supabase-js';
 
 import { TeacherSearchFilter } from '@/components/TeacherSearchFilter';
 import { TeacherCard, TeacherCardProps } from '@/components/TeacherCard';
@@ -44,6 +45,11 @@ const filterSchema = z.object({
 
 type TeacherFilters = z.infer<typeof filterSchema>;
 
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
 export default function TeachersPage() {
   const [filters, setFilters] = useState<TeacherFilters>({});
   const [page, setPage] = useState(1);
@@ -51,8 +57,73 @@ export default function TeachersPage() {
   const [sortBy, setSortBy] = useState('rating');
 
   // Fetch danh sách giáo viên với bộ lọc
-  const { data, isLoading, isError } = useQuery<TeacherProfileResponse>({
-    queryKey: ['/api/teacher-profiles', { ...filters, page, pageSize, sortBy }],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['teachers', { ...filters, page, pageSize, sortBy }],
+    queryFn: async () => {
+      let query = supabase
+        .from('teachers')
+        .select(`
+          id,
+          full_name,
+          avatar,
+          title,
+          rating,
+          rating_count,
+          hourly_rate,
+          subjects,
+          education,
+          experience
+        `, { count: 'exact' });
+
+      // Re-enable filters
+      if (filters.category && filters.category !== 'all') {
+        query = query.contains('subjects', [filters.category]);
+      }
+      if (filters.rating) {
+        query = query.gte('rating', filters.rating);
+      }
+      if (filters.priceMin) {
+        query = query.gte('hourly_rate', filters.priceMin);
+      }
+      if (filters.priceMax) {
+        query = query.lte('hourly_rate', filters.priceMax);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        case 'priceAsc':
+          query = query.order('hourly_rate', { ascending: true });
+          break;
+        case 'priceDesc':
+          query = query.order('hourly_rate', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+      }
+
+      // Apply pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+
+      const { data: teachers, error, count } = await query;
+
+      if (error) throw error;
+
+      return {
+        teachers,
+        pagination: {
+          total: count || 0,
+          pages: Math.ceil((count || 0) / pageSize),
+          page,
+          limit: pageSize
+        }
+      };
+    }
   });
 
   const handleFilterChange = (newFilters: TeacherFilters) => {
@@ -99,38 +170,43 @@ export default function TeachersPage() {
   };
 
   // Chuyển đổi dữ liệu API sang prop cho TeacherCard
-  const mapTeacherData = (teacher: any): TeacherCardProps => {
-    return {
-      id: teacher.id,
-      name: teacher.user?.fullName || 'Giáo viên',
-      avatar: teacher.user?.avatar || null,
-      title: teacher.title,
-      rating: teacher.rating || 0,
-      ratingCount: teacher.ratingCount || 0,
-      hourlyRate: teacher.hourlyRate,
-      subjects: teacher.subjects?.map((s: any) => s.category) || [],
-      education: teacher.education || 'Chưa cập nhật',
-      experience: teacher.experience || 'Chưa cập nhật'
-    };
-  };
+  const mapTeacherData = (teacher: any): TeacherCardProps => ({
+    id: teacher.id,
+    name: teacher.full_name || 'Giáo viên',
+    avatar: teacher.avatar || null,
+    title: teacher.title,
+    rating: teacher.rating || 0,
+    ratingCount: teacher.rating_count || 0,
+    hourlyRate: teacher.hourly_rate,
+    subjects: teacher.subjects || [],
+    education: teacher.education || 'Chưa cập nhật',
+    experience: teacher.experience || 'Chưa cập nhật'
+  });
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Tìm kiếm giáo viên</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Bộ lọc bên trái */}
-        <aside className="md:col-span-1">
+      {/* Creative Header Section */}
+      <div className="relative mb-10 p-6 rounded-xl bg-gradient-to-r from-pink-100 via-white to-blue-100 flex flex-col items-center shadow-md overflow-hidden">
+        <h1 className="text-4xl font-extrabold text-primary mb-2 drop-shadow-lg">Gặp gỡ các giáo viên xuất sắc!</h1>
+        <p className="text-lg text-gray-600 mb-4 text-center max-w-2xl">Khám phá đội ngũ giáo viên tài năng, tận tâm và giàu kinh nghiệm. Hãy chọn cho mình người đồng hành lý tưởng trên con đường học tập!</p>
+        <div className="absolute right-0 top-0 opacity-10 pointer-events-none select-none">
+          <svg width="180" height="120" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="60" fill="#f472b6" />
+            <circle cx="140" cy="40" r="40" fill="#60a5fa" />
+          </svg>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {/* Bộ lọc bên trái (on mobile, show above grid) */}
+        <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1 mb-8 sm:mb-0">
           <TeacherSearchFilter onFilterChange={handleFilterChange} />
-        </aside>
-        
-        {/* Danh sách giáo viên bên phải */}
-        <div className="md:col-span-3">
+        </div>
+        {/* Danh sách giáo viên bên phải (grid) */}
+        <div className="sm:col-span-2 lg:col-span-2 xl:col-span-3">
           <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="text-lg font-medium">
               {data?.teachers ? `Hiển thị ${data.teachers.length} giáo viên` : 'Đang tìm kiếm...'}
             </div>
-            
             <div className="flex gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Sắp xếp theo:</span>
@@ -146,7 +222,6 @@ export default function TeachersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Hiển thị:</span>
                 <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
@@ -163,7 +238,6 @@ export default function TeachersPage() {
               </div>
             </div>
           </div>
-          
           {isLoading ? (
             <div className="space-y-6">
               {renderSkeletonLoading()}
@@ -173,13 +247,12 @@ export default function TeachersPage() {
               Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.
             </div>
           ) : data?.teachers && data.teachers.length > 0 ? (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
               {data.teachers.map((teacher) => (
                 <TeacherCard key={teacher.id} {...mapTeacherData(teacher)} />
               ))}
-              
               {data.pagination && data.pagination.pages > 1 && (
-                <div className="flex justify-center mt-8">
+                <div className="col-span-full flex justify-center mt-8">
                   <Pagination
                     currentPage={page}
                     totalPages={data.pagination.pages}

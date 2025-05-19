@@ -216,7 +216,7 @@ const CourseDetail = () => {
   return (
     <>
       <Helmet>
-        <title>{course.title} - EduViet</title>
+        <title>{course.title} - AithEduConnect</title>
         <meta name="description" content={`Khóa học ${course.title} do giáo viên ${course.teachers?.full_name || "chuyên nghiệp"} giảng dạy. ${course.description?.substring(0, 150) || ""}`} />
       </Helmet>
       

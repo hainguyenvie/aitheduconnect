@@ -32,12 +32,12 @@ export function TeacherSearchFilter({ onFilterChange }: TeacherSearchFilterProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       query: '',
-      category: '',
+      category: 'all',
       rating: 0,
       priceMin: 0,
       priceMax: 1000000,
       hasFreeTrial: false,
-      availability: '',
+      availability: 'all',
     },
   });
 
@@ -117,7 +117,7 @@ export function TeacherSearchFilter({ onFilterChange }: TeacherSearchFilterProps
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Tất cả môn học</SelectItem>
+                    <SelectItem value="all">Tất cả môn học</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.value} value={category.value}>
                         {category.label}
@@ -213,7 +213,7 @@ export function TeacherSearchFilter({ onFilterChange }: TeacherSearchFilterProps
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Bất kỳ thời gian nào</SelectItem>
+                    <SelectItem value="all">Bất kỳ thời gian nào</SelectItem>
                     {availabilityOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}

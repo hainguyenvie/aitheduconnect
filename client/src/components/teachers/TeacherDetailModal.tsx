@@ -34,7 +34,7 @@ import { CategoryIcons } from '@/lib/icons';
 interface BookingDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  teacherId: number;
+  teacherId: string;
   teacherName: string;
 }
 
@@ -377,60 +377,29 @@ const BookingDialog = ({ isOpen, onOpenChange, teacherId, teacherName }: Booking
 };
 
 interface TeacherDetailModalProps {
-  teacherId: number;
+  teacher: any;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const TeacherDetailModal = ({ teacherId, isOpen, onClose }: TeacherDetailModalProps) => {
+const TeacherDetailModal = ({ teacher, isOpen, onClose }: TeacherDetailModalProps) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
-  
-  // Fetch teacher profile data
-  const { data: teacher, isLoading, error } = useQuery({
-    queryKey: ['/api/teacher-profiles', teacherId],
-    queryFn: async () => {
-      const res = await fetch(`/api/teacher-profiles/${teacherId}`);
-      if (!res.ok) throw new Error('Failed to fetch teacher');
-      return res.json();
-    },
-    enabled: isOpen && teacherId > 0,
-  });
-  
-  // Fetch teacher schedules
-  const { data: schedules } = useQuery({
-    queryKey: ['/api/teachers', teacherId, 'schedules'],
-    enabled: isOpen && teacherId > 0,
-  });
-  
-  // Fetch teacher reviews
-  const { data: reviews } = useQuery({
-    queryKey: ['/api/teachers', teacherId, 'reviews'],
-    enabled: isOpen && activeTab === 'reviews' && teacherId > 0,
-  });
-  
-  // Fetch teacher courses
-  const { data: courses } = useQuery({
-    queryKey: ['/api/teachers', teacherId, 'courses'],
-    enabled: isOpen && activeTab === 'courses' && teacherId > 0,
-  });
-  
   const [selectedSchedule, setSelectedSchedule] = useState<{
     day: string;
     time: string;
   } | null>(null);
-  
+
   if (!isOpen) return null;
-  if (isLoading) return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">Đang tải...</div>;
-  if (error || !teacher) return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">Không tìm thấy giáo viên</div>;
+  if (!teacher) return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">Không tìm thấy giáo viên</div>;
   
   // Render the booking dialog component
   const renderBookingDialog = () => (
     <BookingDialog 
       isOpen={isBookingDialogOpen}
       onOpenChange={setIsBookingDialogOpen}
-      teacherId={teacherId}
+      teacherId={teacher.id}
       teacherName={teacher.fullName}
     />
   );

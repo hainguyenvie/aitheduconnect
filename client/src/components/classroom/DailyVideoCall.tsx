@@ -23,7 +23,7 @@ const DailyVideoCall = ({ roomUrl, isTeacher, onLeaveCall }: DailyVideoCallProps
     // Initialize Daily.co call
     const initCall = async () => {
       try {
-        callRef.current = DailyIframe.createFrame(videoRef.current, {
+        callRef.current = DailyIframe.createFrame(videoRef.current as HTMLElement, {
           iframeStyle: {
             width: '100%',
             height: '100%',
@@ -95,36 +95,17 @@ const DailyVideoCall = ({ roomUrl, isTeacher, onLeaveCall }: DailyVideoCallProps
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Video container */}
-      <div ref={videoRef} className="flex-1 bg-black rounded-lg overflow-hidden" />
-
-      {/* Controls */}
-      <div className="flex justify-center space-x-4 p-4 bg-neutral-900">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleAudio}
-          className={!isAudioOn ? 'bg-red-500 hover:bg-red-600' : ''}
-        >
-          {isAudioOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleVideo}
-          className={!isVideoOn ? 'bg-red-500 hover:bg-red-600' : ''}
-        >
-          {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-        </Button>
-        <Button
-          variant="destructive"
-          size="icon"
-          onClick={handleLeaveCall}
-        >
-          <PhoneOff className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="relative w-full h-full">
+      {/* Video container fills all space */}
+      <div ref={videoRef} className="absolute inset-0 w-full h-full bg-black" />
+      {/* Small Exit Room Button, bottom right, round icon */}
+      <button
+        onClick={handleLeaveCall}
+        className="absolute bottom-3 right-6 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg transition-all"
+        title="Thoát phòng"
+      >
+        <PhoneOff className="h-5 w-5" />
+      </button>
     </div>
   );
 };

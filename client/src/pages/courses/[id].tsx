@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import { format } from "date-fns";
@@ -34,33 +33,67 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Star, BookOpen, Clock, Users, CheckCircle, MessageSquare, Video } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Loader2, Star, BookOpen, Clock, Users, CheckCircle, MessageSquare, Video, Upload, FileText, ClipboardList, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const CourseDetail = () => {
   const [, params] = useRoute("/courses/:id");
   const [, setLocation] = useLocation();
-  const courseId = params?.id ? parseInt(params.id) : null;
+  const courseId = params?.id || null;
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  
+
   // State for enrollment
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [course, setCourse] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch course
-  const { data: course, isLoading, error } = useQuery({
-    queryKey: [`/api/courses/${courseId}`],
-    queryFn: async () => {
-      if (!courseId) throw new Error("Invalid course ID");
-      const response = await fetch(`/api/courses/${courseId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch course");
+  // Curriculum/lesson toggling state
+  const [openStates, setOpenStates] = useState<boolean[]>([]);
+  useEffect(() => {
+    if (course && course.modules && Array.isArray(course.modules)) {
+      // Flatten all lessons from all modules
+      const allLessons = course.modules.flatMap((module: any) => module.lessons || []);
+      setOpenStates(Array(allLessons.length).fill(true));
+    }
+  }, [course]);
+  const handleToggle = (idx: number) => {
+    setOpenStates((prev) => prev.map((open, i) => i === idx ? !open : open));
+  };
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      setIsLoading(true);
+      setError(null);
+      if (!courseId) {
+        setError("Invalid course ID");
+        setIsLoading(false);
+        return;
       }
-      return response.json();
-    },
-    enabled: !!courseId,
-  });
+      const { data, error } = await supabase
+        .from('courses')
+        .select(`*, teachers:teacher_profile_id (id, full_name, title, avatar, rating, rating_count, bio, education, experience)`)
+        .eq('id', courseId)
+        .single();
+      if (error || !data) {
+        setError('Không thể tải thông tin khóa học. Khóa học không tồn tại hoặc đã bị xóa.');
+        setCourse(null);
+      } else {
+        setCourse(data);
+      }
+      setIsLoading(false);
+    };
+    fetchCourse();
+  }, [courseId]);
 
   // Format price in Vietnamese currency
   const formatPrice = (price: number) => {
@@ -81,7 +114,6 @@ const CourseDetail = () => {
       science: "Khoa học",
       art: "Nghệ thuật",
     };
-    
     return categories[category] || category;
   };
 
@@ -96,22 +128,17 @@ const CourseDetail = () => {
       setLocation("/login");
       return;
     }
-
     try {
       setIsEnrolling(true);
-      
-      // Create booking for the course
-      await apiRequest("POST", "/api/bookings", {
-        teacherProfileId: course.teacher.id,
-        courseId: courseId,
-      });
-
+      // Create booking for the course (update this to use your real API if needed)
+      // await apiRequest("POST", "/api/bookings", {
+      //   teacherProfileId: course.teachers.id,
+      //   courseId: courseId,
+      // });
       toast({
         title: "Đăng ký thành công",
         description: "Bạn đã đăng ký khóa học thành công. Vui lòng thanh toán để bắt đầu học.",
       });
-
-      // Close dialog and redirect to dashboard
       setEnrollDialog(false);
       setLocation("/dashboard/student");
     } catch (error) {
@@ -128,10 +155,8 @@ const CourseDetail = () => {
   // Get initials for avatar
   const getInitials = (name: string) => {
     return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+      ? name.split(" ").map((n) => n[0]).join("").toUpperCase()
+      : "?";
   };
 
   // Get rating stars
@@ -139,7 +164,6 @@ const CourseDetail = () => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
     return (
       <div className="flex">
         {[...Array(fullStars)].map((_, i) => (
@@ -181,9 +205,7 @@ const CourseDetail = () => {
             <p className="text-neutral-dark mb-6">
               Không thể tải thông tin khóa học. Khóa học không tồn tại hoặc đã bị xóa.
             </p>
-            <Button onClick={() => setLocation("/courses")}>
-              Quay lại danh sách khóa học
-            </Button>
+            <Button onClick={() => setLocation("/courses")}>Quay lại danh sách khóa học</Button>
           </div>
         </main>
         <Footer />
@@ -195,7 +217,7 @@ const CourseDetail = () => {
     <>
       <Helmet>
         <title>{course.title} - EduViet</title>
-        <meta name="description" content={`Khóa học ${course.title} do giáo viên ${course.teacher?.user?.fullName || "chuyên nghiệp"} giảng dạy. ${course.description?.substring(0, 150) || ""}`} />
+        <meta name="description" content={`Khóa học ${course.title} do giáo viên ${course.teachers?.full_name || "chuyên nghiệp"} giảng dạy. ${course.description?.substring(0, 150) || ""}`} />
       </Helmet>
       
       <div className="min-h-screen flex flex-col">
@@ -231,11 +253,10 @@ const CourseDetail = () => {
                     {getCategoryName(course.category)}
                   </Badge>
                   <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
-                  
                   <div className="flex items-center gap-3 mb-6">
                     <div className="flex items-center">
                       {getRatingStars(course.rating)}
-                      <span className="ml-2">{course.rating.toFixed(1)} ({course.ratingCount} đánh giá)</span>
+                      <span className="ml-2">{course.rating.toFixed(1)} ({course.rating_count} đánh giá)</span>
                     </div>
                     <div className="flex items-center">
                       <BookOpen className="w-4 h-4 mr-1" />
@@ -246,21 +267,19 @@ const CourseDetail = () => {
                       {course.enrolledStudents} học viên
                     </div>
                   </div>
-                  
                   <div className="flex items-center">
                     <Avatar className="h-10 w-10 mr-2">
-                      <AvatarImage src={course.teacher?.user?.avatar} />
+                      <AvatarImage src={course.teachers?.avatar} />
                       <AvatarFallback>
-                        {course.teacher?.user?.fullName ? getInitials(course.teacher.user.fullName) : "GV"}
+                        {course.teachers?.full_name ? getInitials(course.teachers.full_name) : getInitials(course.teachers?.name || "GV")}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="text-sm opacity-80">Giáo viên</p>
-                      <p className="font-medium">{course.teacher?.user?.fullName}</p>
+                      <p className="font-medium">{course.teachers?.full_name || course.teachers?.name}</p>
                     </div>
                   </div>
                 </div>
-                
                 <div className="md:w-1/3">
                   <Card className="w-full">
                     <CardContent className="p-6">
@@ -269,7 +288,6 @@ const CourseDetail = () => {
                           <p className="text-sm text-neutral-dark">Học phí</p>
                           <p className="text-3xl font-bold text-[#e63946]">{formatPrice(course.price)}</p>
                         </div>
-                        
                         <ul className="space-y-2 mb-6">
                           <li className="flex items-center">
                             <CheckCircle className="w-4 h-4 text-[#00b8a9] mr-2" />
@@ -292,7 +310,6 @@ const CourseDetail = () => {
                             <span>Chứng chỉ hoàn thành</span>
                           </li>
                         </ul>
-                        
                         <Button 
                           onClick={() => setEnrollDialog(true)}
                           className="w-full bg-[#e63946] hover:bg-red-700 text-white mb-3"
@@ -306,6 +323,72 @@ const CourseDetail = () => {
               </div>
             </div>
           </div>
+
+          {/* Important Numbers & Intro Video for course id 1 */}
+          {course.id === 1 && (
+            <div className="container mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Important Numbers */}
+              <Card className="md:col-span-1">
+                <CardHeader>
+                  <CardTitle>Thông tin nổi bật</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col items-center">
+                      <BookOpen className="w-7 h-7 text-primary mb-1" />
+                      <span className="font-bold text-lg">{course.totalSessions}</span>
+                      <span className="text-xs text-neutral-dark">Buổi học</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Users className="w-7 h-7 text-primary mb-1" />
+                      <span className="font-bold text-lg">{course.enrolledStudents}</span>
+                      <span className="text-xs text-neutral-dark">Học viên</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Star className="w-7 h-7 text-[#ffd60a] mb-1" />
+                      <span className="font-bold text-lg">{course.rating.toFixed(1)}</span>
+                      <span className="text-xs text-neutral-dark">Đánh giá</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <ClipboardList className="w-7 h-7 text-primary mb-1" />
+                      <span className="font-bold text-lg">{course.assignmentsCount}</span>
+                      <span className="text-xs text-neutral-dark">Bài tập</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Clock className="w-7 h-7 text-primary mb-1" />
+                      <span className="font-bold text-lg">{course.avgSessionDuration} phút</span>
+                      <span className="text-xs text-neutral-dark">/buổi</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Users className="w-7 h-7 text-primary mb-1" />
+                      <span className="font-bold text-lg">{course.rating_count}</span>
+                      <span className="text-xs text-neutral-dark">Lượt đánh giá</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Intro Video */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Giới thiệu khóa học</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-w-16 aspect-h-9 mb-4">
+                    <iframe
+                      src={course.introVideo}
+                      title="Giới thiệu khóa học Toán Cao Cấp Cơ Bản"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-64 rounded-lg border"
+                    />
+                  </div>
+                  <p className="text-neutral-dark text-base">
+                    Khóa học Toán Cao Cấp Cơ Bản giúp bạn nắm vững kiến thức nền tảng, phát triển tư duy logic và chuẩn bị tốt cho các kỳ thi quan trọng. Được giảng dạy bởi giảng viên nhiều kinh nghiệm, khóa học này phù hợp cho học sinh, sinh viên và những ai muốn củng cố kiến thức toán học.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           
           {/* Course Content */}
           <div className="container mx-auto px-4 py-8">
@@ -385,28 +468,134 @@ const CourseDetail = () => {
                         <CardTitle>Nội dung khóa học</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
-                          {Array.from({ length: course.totalSessions }, (_, i) => (
-                            <div key={i} className="border rounded-lg p-4">
-                              <div className="flex justify-between items-center mb-2">
-                                <h3 className="font-medium">Buổi {i + 1}</h3>
-                                <Badge variant="outline" className="bg-neutral-lightest">
-                                  <Clock className="w-3 h-3 mr-1" /> 90 phút
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-neutral-dark mb-2">
-                                {course.category === "mathematics" ? "Chủ đề về đại số và hình học" :
-                                 course.category === "languages" ? "Bài học ngữ pháp và từ vựng" :
-                                 course.category === "programming" ? "Bài tập lập trình cơ bản" :
-                                 course.category === "music" ? "Thực hành âm nhạc" :
-                                 course.category === "science" ? "Thí nghiệm khoa học" :
-                                 "Bài học thực hành"}
-                              </p>
-                              <div className="flex items-center text-xs text-primary">
-                                <Video className="w-3 h-3 mr-1" /> Học trực tuyến cùng giáo viên
-                              </div>
-                            </div>
-                          ))}
+                        <div className="space-y-6">
+                          {(() => {
+                            // Combine all lessons and independent assignments into a single list
+                            const allLessons = course.modules.flatMap((module: any) => module.lessons);
+                            const allItems = [
+                              ...allLessons.map((lesson: any, idx: number) => ({ type: 'lesson', data: lesson, idx })),
+                              ...(course.independentAssignments || []).map((a: any, idx: number) => ({ type: 'independent', data: a, idx: allLessons.length + idx })),
+                            ];
+                            return allItems.map((item: any, lIdx: number) => {
+                              if (item.type === 'lesson') {
+                                const lesson = item.data;
+                                const assignments = lesson.contents.filter((c: any) => c.type === 'assignment');
+                                const nonAssignments = lesson.contents.filter((c: any) => c.type !== 'assignment');
+                                return (
+                                  <div key={lesson.id} className="border rounded-lg">
+                                    <div className="flex items-center justify-between p-4 cursor-pointer select-none" onClick={() => handleToggle(lIdx)}>
+                                      <div className="flex items-center gap-2">
+                                        <BookOpen className="w-4 h-4 text-primary" />
+                                        <span className="font-semibold">Buổi {lIdx + 1}: {lesson.title}</span>
+                                      </div>
+                                      {openStates[lIdx] ? (
+                                        <ChevronUp className="w-5 h-5 text-primary" />
+                                      ) : (
+                                        <ChevronDown className="w-5 h-5 text-primary" />
+                                      )}
+                                    </div>
+                                    {openStates[lIdx] && (
+                                      <div className="p-4 pt-0 space-y-3">
+                                        {lesson.subToc && lesson.subToc.length > 0 && (
+                                          <ul className="list-disc list-inside text-sm text-neutral-dark mb-2">
+                                            {lesson.subToc.map((item: string, idx: number) => (
+                                              <li key={idx}>{item}</li>
+                                            ))}
+                                          </ul>
+                                        )}
+                                        {/* Render non-assignment contents in order */}
+                                        {nonAssignments.map((content: any, cIdx: number) => {
+                                          if (content.type === 'video') {
+                                            return (
+                                              <div key={cIdx} className="">
+                                                <div className="font-medium mb-1">{content.title}</div>
+                                                <div className="aspect-w-16 aspect-h-9">
+                                                  <iframe
+                                                    src={content.url}
+                                                    title={content.title}
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                    className="w-full h-64 rounded-lg border"
+                                                  />
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                          if (content.type === 'reading') {
+                                            return (
+                                              <div key={cIdx} className="">
+                                                <div className="font-medium mb-1">{content.title}</div>
+                                                <a href={content.url} className="text-primary underline" target="_blank" rel="noopener noreferrer">Tải tài liệu</a>
+                                              </div>
+                                            );
+                                          }
+                                          if (content.type === 'slide') {
+                                            return (
+                                              <div key={cIdx} className="">
+                                                <div className="font-medium mb-1">{content.title}</div>
+                                                <a href={content.url} className="text-primary underline" target="_blank" rel="noopener noreferrer">Xem slide</a>
+                                              </div>
+                                            );
+                                          }
+                                          return null;
+                                        })}
+                                        {/* Render assignments at the end of the lesson */}
+                                        {assignments.length > 0 && (
+                                          <div className="space-y-3 mt-4">
+                                            {assignments.map((content: any, cIdx: number) => (
+                                              <div key={cIdx} className="bg-neutral-lightest border rounded p-3">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                  <ClipboardList className="w-4 h-4 text-primary" />
+                                                  <span className="font-semibold">{content.title}</span>
+                                                </div>
+                                                <div className="text-sm mb-2">{content.description}</div>
+                                                {/* Assignment upload/comment UI (demo only) */}
+                                                <div className="flex flex-col gap-2">
+                                                  <label className="text-xs font-medium">Nộp bài tập:</label>
+                                                  <Input type="file" className="max-w-xs" />
+                                                  <Textarea placeholder="Nhập bình luận hoặc trả lời bài tập..." className="max-w-lg" />
+                                                  <Button size="sm" className="w-fit">Nộp bài</Button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              } else if (item.type === 'independent') {
+                                const a = item.data;
+                                return (
+                                  <div key={lIdx} className="border rounded-lg">
+                                    <div className="flex items-center justify-between p-4 cursor-pointer select-none" onClick={() => handleToggle(lIdx)}>
+                                      <div className="flex items-center gap-2">
+                                        <ClipboardList className="w-4 h-4 text-primary" />
+                                        <span className="font-semibold">Bài kiểm tra {lIdx + 1}: {a.title}</span>
+                                      </div>
+                                      {openStates[lIdx] ? (
+                                        <ChevronUp className="w-5 h-5 text-primary" />
+                                      ) : (
+                                        <ChevronDown className="w-5 h-5 text-primary" />
+                                      )}
+                                    </div>
+                                    {openStates[lIdx] && (
+                                      <div className="p-4 pt-0">
+                                        <div className="text-sm mb-2">{a.description}</div>
+                                        <div className="flex flex-col gap-2">
+                                          <label className="text-xs font-medium">Nộp bài tập:</label>
+                                          <Input type="file" className="max-w-xs" />
+                                          <Textarea placeholder="Nhập bình luận hoặc trả lời bài tập..." className="max-w-lg" />
+                                          <Button size="sm" className="w-fit">Nộp bài</Button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            });
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
@@ -420,18 +609,18 @@ const CourseDetail = () => {
                       <CardContent>
                         {course.reviews && course.reviews.length > 0 ? (
                           <div className="space-y-6">
-                            {course.reviews.map((review) => (
+                            {course.reviews.map((review: any) => (
                               <div key={review.id} className="border-b pb-6 last:border-b-0">
                                 <div className="flex items-start gap-3">
                                   <Avatar className="w-10 h-10">
                                     <AvatarImage src={review.student?.avatar} />
                                     <AvatarFallback>
-                                      {review.student?.fullName ? getInitials(review.student.fullName) : "HV"}
+                                      {review.student?.full_name ? getInitials(review.student.full_name) : "HV"}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
                                     <div className="flex items-center gap-2">
-                                      <h4 className="font-medium">{review.student?.fullName}</h4>
+                                      <h4 className="font-medium">{review.student?.full_name}</h4>
                                       <span className="text-xs text-neutral-medium">
                                         {format(new Date(review.createdAt), "dd MMMM, yyyy", { locale: vi })}
                                       </span>
@@ -469,23 +658,23 @@ const CourseDetail = () => {
                   <CardContent>
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="h-16 w-16">
-                        <AvatarImage src={course.teacher?.user?.avatar} />
+                        <AvatarImage src={course.teachers?.avatar} />
                         <AvatarFallback className="text-xl">
-                          {course.teacher?.user?.fullName ? getInitials(course.teacher.user.fullName) : "GV"}
+                          {course.teachers?.full_name ? getInitials(course.teachers.full_name) : "GV"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-bold">{course.teacher?.user?.fullName}</h3>
-                        <p className="text-sm text-neutral-dark">{course.teacher?.title}</p>
+                        <h3 className="font-bold">{course.teachers?.full_name}</h3>
+                        <p className="text-sm text-neutral-dark">{course.teachers?.title}</p>
                         <div className="flex items-center mt-1">
                           <Star className="w-4 h-4 text-[#ffd60a] fill-[#ffd60a] mr-1" />
-                          <span className="text-sm">{course.teacher?.rating.toFixed(1)}</span>
+                          <span className="text-sm">{course.teachers?.rating.toFixed(1)}</span>
                         </div>
                       </div>
                     </div>
                     
                     <p className="text-neutral-dark mb-4">
-                      {course.teacher?.experience || "Giáo viên có nhiều năm kinh nghiệm giảng dạy trong lĩnh vực chuyên môn."}
+                      {course.teachers?.experience || "Giáo viên có nhiều năm kinh nghiệm giảng dạy trong lĩnh vực chuyên môn."}
                     </p>
                     
                     <Button
@@ -493,7 +682,7 @@ const CourseDetail = () => {
                       variant="outline"
                       className="w-full"
                     >
-                      <a href={`/teachers/${course.teacher?.id}`}>Xem hồ sơ giáo viên</a>
+                      <a href={`/teachers/${course.teachers?.id}`}>Xem hồ sơ giáo viên</a>
                     </Button>
                   </CardContent>
                 </Card>
@@ -513,7 +702,7 @@ const CourseDetail = () => {
                     
                     {!isAuthenticated && (
                       <p className="text-sm text-neutral-dark text-center">
-                        Vui lòng <Link href="/login"><a className="text-primary">đăng nhập</a></Link> để liên hệ với giáo viên
+                        Vui lòng <a href="/login" className="text-primary">đăng nhập</a> để liên hệ với giáo viên
                       </p>
                     )}
                   </CardContent>
@@ -542,12 +731,12 @@ const CourseDetail = () => {
                   <p className="text-sm font-medium">Giáo viên:</p>
                   <div className="flex items-center">
                     <Avatar className="w-8 h-8 mr-2">
-                      <AvatarImage src={course.teacher?.user?.avatar} />
+                      <AvatarImage src={course.teachers?.avatar} />
                       <AvatarFallback>
-                        {course.teacher?.user?.fullName ? getInitials(course.teacher.user.fullName) : "GV"}
+                        {course.teachers?.full_name ? getInitials(course.teachers.full_name) : "GV"}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{course.teacher?.user?.fullName}</span>
+                    <span>{course.teachers?.full_name}</span>
                   </div>
                 </div>
                 

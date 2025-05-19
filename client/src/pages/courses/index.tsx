@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import Header from "@/components/layout/Header";
@@ -16,11 +15,15 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { CategoryIcons } from "@/lib/icons";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const categories = [
   { value: "mathematics", label: "Toán học" },
@@ -35,8 +38,10 @@ const CoursesIndex = () => {
   const [location, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("popularity");
+  const [courses, setCourses] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Parse URL search params on component mount
   useEffect(() => {
     const params = new URLSearchParams(location.split("?")[1]);
     if (params.has("category")) {
@@ -44,26 +49,30 @@ const CoursesIndex = () => {
     }
   }, [location]);
 
-  // Fetch courses
-  const { data: courses, isLoading, error } = useQuery({
-    queryKey: ["/api/courses", selectedCategory],
-    queryFn: async () => {
-      const params = new URLSearchParams();
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setIsLoading(true);
+      setError(null);
+      let query = supabase
+        .from('courses')
+        .select(`*, teachers:teacher_profile_id (id, full_name, title, avatar, rating, rating_count)`)
+        .eq('is_published', true);
       if (selectedCategory) {
-        params.set("category", selectedCategory);
+        query = query.eq('category', selectedCategory);
       }
-      const queryString = params.toString();
-      const response = await fetch(`/api/courses${queryString ? `?${queryString}` : ""}`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch courses");
+      query = query.order('created_at', { ascending: false });
+      const { data, error } = await query;
+      if (error) {
+        setError('Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại sau.');
+        setCourses([]);
+      } else {
+        setCourses(data || []);
       }
-      
-      return response.json();
-    }
-  });
+      setIsLoading(false);
+    };
+    fetchCourses();
+  }, [selectedCategory]);
 
-  // Update URL when category changes
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     const params = new URLSearchParams();
@@ -74,15 +83,12 @@ const CoursesIndex = () => {
     setLocation(`/courses${queryString ? `?${queryString}` : ""}`);
   };
 
-  // Sort courses based on selected criteria
   const sortedCourses = () => {
     if (!courses) return [];
-    
     const coursesCopy = [...courses];
-    
     switch (sortBy) {
       case "popularity":
-        return coursesCopy.sort((a, b) => b.enrolledStudents - a.enrolledStudents);
+        return coursesCopy.sort((a, b) => b.enrolled_students - a.enrolled_students);
       case "rating":
         return coursesCopy.sort((a, b) => b.rating - a.rating);
       case "price-asc":
@@ -100,13 +106,11 @@ const CoursesIndex = () => {
         <title>Khóa học - EduViet</title>
         <meta name="description" content="Khám phá các khóa học chất lượng cao trên nhiều lĩnh vực khác nhau. Học tập cùng những giáo viên hàng đầu trên EduViet." />
       </Helmet>
-      
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow bg-neutral-lightest py-8">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl font-bold mb-6">Khóa học</h1>
-            
             {/* Categories */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-8">
               <Button 
@@ -116,7 +120,6 @@ const CoursesIndex = () => {
               >
                 Tất cả
               </Button>
-              
               {categories.map((category) => {
                 const Icon = CategoryIcons[category.value];
                 return (
@@ -132,13 +135,11 @@ const CoursesIndex = () => {
                 );
               })}
             </div>
-            
             {/* Sort and Filter */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-medium">
                 {selectedCategory ? categories.find(c => c.value === selectedCategory)?.label : "Tất cả khóa học"}
               </h2>
-              
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Sắp xếp theo" />
@@ -151,7 +152,6 @@ const CoursesIndex = () => {
                 </SelectContent>
               </Select>
             </div>
-            
             {/* Courses List */}
             {isLoading ? (
               <div className="flex justify-center items-center h-64">
@@ -161,7 +161,7 @@ const CoursesIndex = () => {
             ) : error ? (
               <div className="text-center py-12">
                 <p className="text-lg text-red-500">
-                  Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại sau.
+                  {error}
                 </p>
               </div>
             ) : courses && courses.length > 0 ? (

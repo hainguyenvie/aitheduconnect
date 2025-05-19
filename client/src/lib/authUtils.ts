@@ -13,11 +13,11 @@ export const MOCK_USER = {
 export const authStorage = {
   setUser: (user: any) => {
     if (user) {
-      localStorage.setItem('eduviet_user', JSON.stringify(user));
+      localStorage.setItem('aitheduconnect_user', JSON.stringify(user));
     }
   },
   getUser: () => {
-    const userJson = localStorage.getItem('eduviet_user');
+    const userJson = localStorage.getItem('aitheduconnect_user');
     if (userJson) {
       try {
         return JSON.parse(userJson);
@@ -28,9 +28,9 @@ export const authStorage = {
     return null;
   },
   clearUser: () => {
-    localStorage.removeItem('eduviet_user');
+    localStorage.removeItem('aitheduconnect_user');
   },
   isAuthenticated: () => {
-    return !!localStorage.getItem('eduviet_user');
+    return !!localStorage.getItem('aitheduconnect_user');
   }
 };

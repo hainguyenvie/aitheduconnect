@@ -126,7 +126,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           </div>
         </div>
         <h2 className="text-center text-2xl font-bold text-gray-900 mb-6">
-          {type === "login" ? "Đăng nhập vào EduViet" : "Đăng ký tài khoản EduViet"}
+          {type === "login" ? "Đăng nhập vào AithEduConnect" : "Đăng ký tài khoản AithEduConnect"}
         </h2>
         
         <Form {...form}>

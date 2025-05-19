@@ -103,8 +103,8 @@ const CoursesIndex = () => {
   return (
     <>
       <Helmet>
-        <title>Khóa học - EduViet</title>
-        <meta name="description" content="Khám phá các khóa học chất lượng cao trên nhiều lĩnh vực khác nhau. Học tập cùng những giáo viên hàng đầu trên EduViet." />
+        <title>Khóa học - AithEduConnect</title>
+        <meta name="description" content="Khám phá các khóa học chất lượng cao trên nhiều lĩnh vực khác nhau. Học tập cùng những giáo viên hàng đầu trên AithEduConnect." />
       </Helmet>
       <div className="flex flex-col min-h-screen">
         <Header />

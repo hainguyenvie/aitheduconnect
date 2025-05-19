@@ -111,8 +111,8 @@ const DashboardLayout = ({ children, title, description }: DashboardLayoutProps)
   return (
     <>
       <Helmet>
-        <title>{title} - EduViet</title>
-        <meta name="description" content={description || "Quản lý việc học tập và lịch dạy của bạn trên nền tảng EduViet"} />
+        <title>{title} - AithEduConnect</title>
+        <meta name="description" content={description || "Quản lý việc học tập và lịch dạy của bạn trên nền tảng AithEduConnect"} />
       </Helmet>
 
       <div className="flex flex-col min-h-screen">

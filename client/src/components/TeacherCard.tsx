@@ -4,10 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { StarIcon } from 'lucide-react';
+import { StarIcon, GraduationCap, Briefcase, DollarSign, Users, CheckCircle, Award } from 'lucide-react';
 
 export type TeacherCardProps = {
-  id: number;
+  id: number | string;
   name: string;
   avatar: string | null;
   title: string;
@@ -17,6 +17,10 @@ export type TeacherCardProps = {
   subjects: string[];
   education: string;
   experience: string;
+  is_verified?: boolean;
+  total_students?: number;
+  bio?: string;
+  featured?: boolean;
 };
 
 export function TeacherCard({
@@ -29,9 +33,12 @@ export function TeacherCard({
   hourlyRate,
   subjects,
   education,
-  experience
+  experience,
+  is_verified,
+  total_students,
+  bio,
+  featured
 }: TeacherCardProps) {
-  
   // Hiển thị sao đánh giá
   const renderStars = (rating: number) => {
     return (
@@ -53,14 +60,25 @@ export function TeacherCard({
   };
 
   return (
-    <Card className="w-full hover:shadow-md transition-shadow duration-200">
+    <Card className="w-full relative bg-gradient-to-br from-pink-50 via-white to-blue-50 hover:scale-[1.025] hover:shadow-xl transition-all duration-200 overflow-hidden">
+      {/* Featured Ribbon */}
+      {featured && (
+        <div className="absolute top-0 left-0 bg-gradient-to-r from-pink-500 to-yellow-400 text-white px-3 py-1 text-xs font-bold rounded-br-lg z-10">
+          Nổi bật
+        </div>
+      )}
       <CardHeader className="flex flex-row items-center gap-4 pb-2">
-        <Avatar className="h-16 w-16">
+        <Avatar className="h-16 w-16 ring-2 ring-primary">
           <AvatarImage src={avatar || undefined} alt={name} />
           <AvatarFallback>{name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="space-y-1">
-          <CardTitle className="text-xl">{name}</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-xl flex items-center gap-2">{name}
+              {is_verified && <CheckCircle className="h-5 w-5 text-green-500" />}
+              {rating >= 4.7 && <Award className="h-5 w-5 text-yellow-500" />}
+            </CardTitle>
+          </div>
           <CardDescription className="text-base font-medium">{title}</CardDescription>
           {renderStars(rating)}
         </div>
@@ -74,15 +92,27 @@ export function TeacherCard({
           ))}
         </div>
         <div className="space-y-2 mt-3 text-sm">
-          <div>
+          <div className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4 text-blue-500" />
             <span className="font-semibold">Học vấn:</span> {education}
           </div>
-          <div>
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-amber-600" />
             <span className="font-semibold">Kinh nghiệm:</span> {experience}
           </div>
-          <div className="mt-3 text-lg font-semibold text-primary">
-            {hourlyRate.toLocaleString('vi-VN')} đ/giờ
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-green-600" />
+            <span className="font-semibold">Học phí:</span> <span className="text-lg font-semibold text-primary">{hourlyRate.toLocaleString('vi-VN')} đ/giờ</span>
           </div>
+          {typeof total_students === 'number' && (
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-purple-500" />
+              <span className="font-semibold">Học viên:</span> {total_students}+
+            </div>
+          )}
+          {bio && (
+            <div className="italic text-gray-600 mt-2">"{bio.length > 80 ? bio.slice(0, 80) + '...' : bio}"</div>
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between pt-2">
@@ -90,7 +120,9 @@ export function TeacherCard({
           <Button variant="outline">Xem hồ sơ</Button>
         </Link>
         <Link href={`/booking/${id}`}>
-          <Button>Đặt lịch</Button>
+          <Button className="bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-bold shadow-lg hover:from-pink-600 hover:to-yellow-500 scale-105 transition-transform duration-200">
+            Đặt lịch ngay
+          </Button>
         </Link>
       </CardFooter>
     </Card>

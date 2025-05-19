@@ -135,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fullName: userData.fullName,
             role: userData.role,
           },
+          emailRedirectTo: 'https://aitheduconnect-hainhhe171927.replit.app/auth/callback'
         },
       });
       if (signUpError) throw signUpError;

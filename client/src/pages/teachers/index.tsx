@@ -171,16 +171,16 @@ export default function TeachersPage() {
 
   // Chuyển đổi dữ liệu API sang prop cho TeacherCard
   const mapTeacherData = (teacher: any): TeacherCardProps => ({
-    id: teacher.id,
+      id: teacher.id,
     name: teacher.full_name || 'Giáo viên',
     avatar: teacher.avatar || null,
-    title: teacher.title,
-    rating: teacher.rating || 0,
+      title: teacher.title,
+      rating: teacher.rating || 0,
     ratingCount: teacher.rating_count || 0,
     hourlyRate: teacher.hourly_rate,
     subjects: teacher.subjects || [],
-    education: teacher.education || 'Chưa cập nhật',
-    experience: teacher.experience || 'Chưa cập nhật'
+      education: teacher.education || 'Chưa cập nhật',
+      experience: teacher.experience || 'Chưa cập nhật'
   });
 
   return (

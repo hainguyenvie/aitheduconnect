@@ -29,6 +29,7 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Trang chủ" },
     { href: "/courses", label: "Khóa học" },
+    { href: "/group-classes", label: "Lớp học nhóm" },
     { href: "/teachers", label: "Giáo viên" },
   ];
 

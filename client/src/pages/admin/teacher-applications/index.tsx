@@ -41,15 +41,13 @@ import { supabase } from '@/lib/supabaseClient';
 // Kiểu dữ liệu cho đơn đăng ký giáo viên
 type TeacherApplication = {
   id: number;
-  userId: number;
-  title: string;
+  user_id: string;
+  specialization: string;
+  motivation: string;
   status: "pending" | "approved" | "rejected";
-  education: string;
-  experience: string;
-  submittedAt: string;
-  processedAt: string | null;
-  user?: {
-    fullName: string;
+  created_at: string;
+  profiles?: {
+    full_name: string;
     email: string;
   };
 };
@@ -64,28 +62,8 @@ const AdminTeacherApplications = () => {
 
   // Kiểm tra xem người dùng có phải là admin không
   if (!user || user.role !== "admin") {
-    return (
-      <div className="container py-12">
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle>Quản lý đơn đăng ký giáo viên</CardTitle>
-            <CardDescription>
-              Trang dành riêng cho quản trị viên
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center py-12">
-            <LockKeyhole className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Không có quyền truy cập</h3>
-            <p className="text-muted-foreground mb-8">
-              Bạn không có quyền truy cập vào trang này. Chỉ quản trị viên mới có thể xem và quản lý đơn đăng ký giáo viên.
-            </p>
-            <Button onClick={() => navigate("/")}>
-              Trở về trang chủ
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    navigate("/");
+    return null;
   }
 
   useEffect(() => {
@@ -101,7 +79,7 @@ const AdminTeacherApplications = () => {
     fetchApplications();
   }, [status]);
 
-  const handleReview = async (app, approve) => {
+  const handleReview = async (app: TeacherApplication, approve: boolean) => {
     setStatus('');
     // Update application status
     const { error: appError } = await supabase
@@ -198,22 +176,20 @@ const AdminTeacherApplications = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {applications.map((app) => (
+              {applications.map((app: TeacherApplication) => (
                 <div key={app.id} className="border rounded p-4">
                   <div><b>Họ tên:</b> {app.profiles?.full_name || 'N/A'}</div>
                   <div><b>Email:</b> {app.profiles?.email || 'N/A'}</div>
                   <div><b>Chuyên môn:</b> {app.specialization}</div>
-                  <div><b>Kinh nghiệm:</b> {app.experience}</div>
-                  <div><b>Bằng cấp, chứng chỉ:</b> {app.certificates}</div>
-                  <div><b>Video giới thiệu:</b> {app.intro_video ? <a href={app.intro_video} target="_blank" rel="noopener noreferrer">Xem video</a> : 'Không có'}</div>
+                  <div><b>Lý do muốn trở thành giáo viên:</b> {app.motivation}</div>
                   <div><b>Trạng thái:</b> {app.status}</div>
                   {app.status === 'pending' && (
                     <div className="mt-2 flex gap-2">
-                      <Button onClick={() => handleReview(app, true)} variant="success">Duyệt</Button>
+                      <Button onClick={() => handleReview(app, true)} variant="default">Duyệt</Button>
                       <Button onClick={() => handleReview(app, false)} variant="destructive">Từ chối</Button>
                     </div>
                   )}
-                        </div>
+                </div>
               ))}
             </div>
           )}

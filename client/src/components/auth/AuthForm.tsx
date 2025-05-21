@@ -21,14 +21,13 @@ import { supabase } from '@/lib/supabaseClient';
 
 // Login form schema
 const loginSchema = z.object({
-  username: z.string().min(1, { message: "Tên đăng nhập không được để trống" }),
+  email: z.string().email({ message: "Email không hợp lệ" }),
   password: z.string().min(1, { message: "Mật khẩu không được để trống" }),
 });
 
 // Register form schema
 const registerSchema = z.object({
   fullName: z.string().min(2, { message: "Họ tên phải có ít nhất 2 ký tự" }),
-  username: z.string().min(3, { message: "Tên đăng nhập phải có ít nhất 3 ký tự" }),
   email: z.string().email({ message: "Email không hợp lệ" }),
   password: z.string().min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" }),
   confirmPassword: z.string().min(1, { message: "Xác nhận mật khẩu không được để trống" }),
@@ -68,27 +67,25 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
   const form = useForm<LoginFormValues | RegisterFormValues>({
     resolver: zodResolver(schema),
     defaultValues: type === "login" 
-      ? { username: "", password: "" } 
-      : { fullName: "", username: "", email: "", password: "", confirmPassword: "" },
+      ? { email: "", password: "" } 
+      : { fullName: "", email: "", password: "", confirmPassword: "" },
   });
 
   // Handle form submission
   const onSubmit = async (data: LoginFormValues | RegisterFormValues) => {
     try {
       if (type === "login") {
-        await login((data as LoginFormValues).username, (data as LoginFormValues).password);
+        await login((data as LoginFormValues).email, (data as LoginFormValues).password);
         
         // Redirect after successful login
         navigate(redirectTo);
       } else {
         const { confirmPassword, ...registerData } = data as RegisterFormValues;
-        const userCredential = await register({ ...registerData, role: "student" });
-        // Try to get the user id from the register result or from Supabase Auth
-        let userId = userCredential?.user?.id;
-        if (!userId && supabase.auth.getUser) {
-          const { data: authUser } = await supabase.auth.getUser();
-          userId = authUser?.user?.id;
-        }
+        await register({ ...registerData, role: "student" });
+        // Try to get the user id from Supabase Auth
+        const { data: authUser } = await supabase.auth.getUser();
+        const userId = authUser?.user?.id;
+        
         if (userId) {
           const { error: profileError } = await supabase.from('profiles').insert([
             {
@@ -149,33 +146,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
             
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên đăng nhập</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nhập tên đăng nhập" {...field} />
+                    <Input type="email" placeholder="Nhập địa chỉ email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            {type === "register" && (
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="Nhập địa chỉ email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
             
             <FormField
               control={form.control}

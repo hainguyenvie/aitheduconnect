@@ -25,6 +25,8 @@ import TeacherApplication from "@/pages/teacher-application";
 import TeacherApplicationReview from "@/pages/admin/teacher-applications";
 import TeacherApplicationDetail from "@/pages/admin/teacher-applications/[id]";
 import NotFound from "@/pages/not-found";
+import CreateCourse from "@/pages/dashboard/teacher/create-course";
+import TeacherCourses from "@/pages/dashboard/teacher/courses";
 
 // Classroom UI Context
 const ClassroomUIContext = createContext({ inClass: false, setInClass: (v: boolean) => {} });
@@ -48,6 +50,8 @@ function Router() {
       <Route path="/teacher-application" component={TeacherApplication} />
       <Route path="/admin/teacher-applications" component={TeacherApplicationReview} />
       <Route path="/admin/teacher-applications/:id" component={TeacherApplicationDetail} />
+      <Route path="/dashboard/teacher/courses/create" component={CreateCourse} />
+      <Route path="/dashboard/teacher/courses" component={TeacherCourses} />
       <Route component={NotFound} />
     </Switch>
   );

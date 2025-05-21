@@ -67,7 +67,7 @@ const DashboardLayout = ({ children, title, description }: DashboardLayoutProps)
         {
           title: "Khóa học",
           icon: <BookOpen className="h-5 w-5" />,
-          href: "/dashboard/teacher?tab=courses",
+          href: "/dashboard/teacher/courses",
         },
         {
           title: "Thống kê",

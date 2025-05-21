@@ -22,11 +22,13 @@ import {
   User, 
   Settings, 
   BookOpen, 
-  FileText
+  FileText,
+  Plus
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TeacherDashboard = () => {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("overview");
 
@@ -52,11 +54,17 @@ const TeacherDashboard = () => {
       case "courses":
         return (
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
               <CardTitle>Khóa học của tôi</CardTitle>
               <CardDescription>
                 Quản lý khóa học bạn đang dạy
               </CardDescription>
+              </div>
+              <Button onClick={() => setLocation('/dashboard/teacher/courses/create')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tạo khóa học mới
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
@@ -65,9 +73,10 @@ const TeacherDashboard = () => {
                 <p className="text-muted-foreground mb-6">
                   Bạn chưa tạo khóa học nào. Tạo khóa học đầu tiên của bạn ngay!
                 </p>
-                <button className="text-primary font-medium hover:underline">
+                <Button onClick={() => setLocation('/dashboard/teacher/courses/create')}>
+                  <Plus className="h-4 w-4 mr-2" />
                   Tạo khóa học mới
-                </button>
+                </Button>
               </div>
             </CardContent>
           </Card>

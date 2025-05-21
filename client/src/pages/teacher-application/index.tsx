@@ -23,9 +23,7 @@ const TeacherApplicationPage = () => {
   const { toast } = useToast();
   const [form, setForm] = useState({
     specialization: '',
-    experience: '',
-    certificates: '',
-    intro_video: '',
+    motivation: '',
   });
   const [status, setStatus] = useState('');
   const [existingApp, setExistingApp] = useState(null);
@@ -54,12 +52,11 @@ const TeacherApplicationPage = () => {
     e.preventDefault();
     setLoading(true);
     setStatus('');
-  if (!user) {
+    if (!user) {
       setStatus('Bạn cần đăng nhập để đăng ký.');
       setLoading(false);
       return;
     }
-    // Prevent duplicate application
     if (existingApp && existingApp.status === 'pending') {
       setStatus('Bạn đã gửi đơn đăng ký và đang chờ xét duyệt.');
       setLoading(false);
@@ -69,9 +66,7 @@ const TeacherApplicationPage = () => {
       {
         user_id: user.id,
         specialization: form.specialization,
-        experience: form.experience,
-        certificates: form.certificates,
-        intro_video: form.intro_video,
+        motivation: form.motivation,
         status: 'pending',
       },
     ]);
@@ -151,34 +146,14 @@ const TeacherApplicationPage = () => {
                       />
             </div>
             <div>
-              <label className="block font-medium mb-1">Kinh nghiệm giảng dạy</label>
+              <label className="block font-medium mb-1">Lý do muốn trở thành giáo viên</label>
               <textarea
-                name="experience"
-                value={form.experience}
+                name="motivation"
+                value={form.motivation}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
                 required
                       />
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Bằng cấp, chứng chỉ</label>
-              <input
-                type="text"
-                name="certificates"
-                value={form.certificates}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Video giới thiệu (link, tuỳ chọn)</label>
-              <input
-                type="text"
-                name="intro_video"
-                value={form.intro_video}
-                onChange={handleChange}
-                className="w-full border rounded px-3 py-2"
-              />
             </div>
             <Button type="submit" disabled={loading || (existingApp && existingApp.status === 'pending')}>
               {loading ? "Đang gửi..." : "Gửi đăng ký"}

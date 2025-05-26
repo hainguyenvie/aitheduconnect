@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
+import LinkParentForm from '@/components/LinkParentForm';
 
 const GENDERS = ["Nam", "Nữ", "Khác"];
 const GRADE_LEVELS = [
@@ -255,21 +256,7 @@ export default function OnboardingModal({ user, open, onClose, onProfileUpdated 
                   {parentStep === 'form' && (
                     <div className="w-full max-w-md flex flex-col gap-4">
                       {parentTab === 'parent' ? (
-                        <>
-                          <Input
-                            placeholder="Email hoặc số điện thoại phụ huynh"
-                            value={parentContact}
-                            onChange={e => setParentContact(e.target.value)}
-                            type="text"
-                            required
-                          />
-                          <div className="flex gap-2">
-                            <Button className="flex-1" disabled={parentLoading || !parentContact} onClick={handleSendLink}>
-                              {parentLoading ? 'Đang gửi...' : 'Gửi lời mời liên kết cho phụ huynh'}
-                            </Button>
-                            <Button type="button" variant="outline" onClick={handleSkipLink}>Bỏ qua</Button>
-                          </div>
-                        </>
+                        <LinkParentForm onSuccess={() => setParentStep('sent')} />
                       ) : (
                         <>
                           <Input

@@ -14,13 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Logo from "@/components/ui/Logo";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AuthModal from "@/components/auth/AuthModal";
+import OnboardingModal from '@/components/onboarding/OnboardingModal';
 
 const Header = () => {
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, forceRefetch } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -41,6 +45,12 @@ const Header = () => {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleSetOnboardingModalOpen = () => setIsOnboardingOpen(true);
+    window.addEventListener('openOnboardingModal', handleSetOnboardingModalOpen);
+    return () => window.removeEventListener('openOnboardingModal', handleSetOnboardingModalOpen);
   }, []);
 
   // Animation variants
@@ -75,106 +85,106 @@ const Header = () => {
   };
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? "bg-white/90 backdrop-blur-md shadow-sm" 
-          : "bg-transparent"
-      }`}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Logo />
+    <>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? "bg-white/90 backdrop-blur-md shadow-sm" 
+            : "bg-transparent"
+        }`}
+      >
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {/* Logo */}
+            <Logo />
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <div key={item.href} className="relative px-1">
-                <Link href={item.href}>
-                  <div className={`px-3 py-2 rounded-md text-gray-700 hover:text-primary transition-colors relative`}>
-                    {item.label}
-                    {location === item.href && (
-                      <motion.div
-                        className="absolute bottom-0 left-0 h-0.5 bg-primary"
-                        initial="initial"
-                        animate="animate"
-                        variants={activeIndicator}
-                      />
-                    )}
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </nav>
-
-          {/* Auth Buttons / User Menu */}
-          <div className="flex items-center">
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.avatar || ""} alt={user?.fullName || "User"} />
-                      <AvatarFallback>{user?.fullName?.charAt(0) || "U"}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuItem className="font-medium">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{user?.fullName}</p>
-                      <p className="text-xs text-gray-500">{user?.email}</p>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => (
+                <div key={item.href} className="relative px-1">
+                  <Link href={item.href}>
+                    <div className={`px-3 py-2 rounded-md text-gray-700 hover:text-primary transition-colors relative`}>
+                      {item.label}
+                      {location === item.href && (
+                        <motion.div
+                          className="absolute bottom-0 left-0 h-0.5 bg-primary"
+                          initial="initial"
+                          animate="animate"
+                          variants={activeIndicator}
+                        />
+                      )}
                     </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={user?.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student"}>
-                      <a className="cursor-pointer w-full">Bảng điều khiển</a>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/messages">
-                      <a className="cursor-pointer w-full">Tin nhắn</a>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                    onClick={logout}
-                  >
-                    Đăng xuất
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="flex space-x-2">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button asChild size={isMobile ? "sm" : "default"} variant="default" className="rounded-full">
-                    <Link href="/login">Đăng nhập</Link>
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden sm:block">
-                  <Button asChild size={isMobile ? "sm" : "default"} variant="outline" className="rounded-full">
-                    <Link href="/register">Đăng ký</Link>
-                  </Button>
-                </motion.div>
-              </div>
-            )}
+                  </Link>
+                </div>
+              ))}
+            </nav>
 
-            {/* Mobile Menu Button */}
-            <div className="ml-2 md:hidden">
-              <Button variant="ghost" size="sm" onClick={toggleMenu}>
-                {isMenuOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
-              </Button>
+            {/* Auth Button / User Menu */}
+            <div className="flex items-center space-x-4">
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.avatar || ""} alt={user?.fullName || "User"} />
+                        <AvatarFallback>{user?.fullName?.charAt(0) || "U"}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuItem className="font-medium">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{user?.fullName}</p>
+                        <p className="text-xs text-gray-500">{user?.email}</p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={user?.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student"}>
+                        <a className="cursor-pointer w-full">Bảng điều khiển</a>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/messages">
+                        <a className="cursor-pointer w-full">Tin nhắn</a>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                      onClick={logout}
+                    >
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    onClick={() => setIsAuthModalOpen(true)}
+                    size={isMobile ? "sm" : "default"} 
+                    variant="default" 
+                    className="rounded-full"
+                  >
+                    Đăng nhập
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Mobile Menu Button */}
+              <div className="ml-2 md:hidden">
+                <Button variant="ghost" size="sm" onClick={toggleMenu}>
+                  {isMenuOpen ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Menu className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Mobile Navigation Menu */}
       <motion.div
@@ -209,14 +219,15 @@ const Header = () => {
 
           <div className="mt-auto p-4">
             {!isAuthenticated && (
-              <div className="space-y-2">
-                <Button asChild className="w-full" variant="default">
-                  <Link href="/login">Đăng nhập</Link>
-                </Button>
-                <Button asChild className="w-full" variant="outline">
-                  <Link href="/register">Đăng ký</Link>
-                </Button>
-              </div>
+              <Button 
+                onClick={() => {
+                  setIsAuthModalOpen(true);
+                  closeMenu();
+                }} 
+                className="w-full"
+              >
+                Đăng nhập
+              </Button>
             )}
           </div>
         </div>
@@ -232,7 +243,22 @@ const Header = () => {
           onClick={closeMenu}
         />
       )}
-    </header>
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
+
+      {isAuthenticated && (
+        <OnboardingModal
+          user={user}
+          open={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onProfileUpdated={forceRefetch}
+        />
+      )}
+    </>
   );
 };
 

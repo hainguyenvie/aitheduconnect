@@ -29,6 +29,9 @@ import GroupClassesPage from "@/pages/group-classes";
 import TeachersPage from "@/pages/teachers";
 import StandaloneTeacherApplications from "@/pages/teacher-applications";
 import TeacherApplicationsAdmin from "@/pages/teacher-applications-admin";
+import AuthCallback from "@/pages/auth/callback";
+import TestEmail from "@/pages/test-email";
+import ParentLinkConfirm from "@/pages/parent-link-confirm";
 
 // Classroom UI Context
 const ClassroomUIContext = createContext({ inClass: false, setInClass: (v: boolean) => {} });
@@ -56,6 +59,9 @@ function Router() {
       <Route path="/teachers" component={TeachersPage} />
       <Route path="/teacher-applications" component={StandaloneTeacherApplications} />
       <Route path="/teacher-applications-admin" component={TeacherApplicationsAdmin} />
+      <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/test-email" component={TestEmail} />
+      <Route path="/parent-link/confirm" component={ParentLinkConfirm} />
       <Route component={NotFound} />
     </Switch>
   );

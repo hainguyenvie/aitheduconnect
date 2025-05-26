@@ -3,43 +3,35 @@ import { useLocation } from 'wouter';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
-export default function AuthCallback() {
-  const [, setLocation] = useLocation();
+const AuthCallback = () => {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        const { error } = await supabase.auth.getSession();
-        if (error) throw error;
-
-        toast({
-          title: 'Xác thực thành công',
-          description: 'Bạn đã xác thực email thành công!',
-        });
-
-        // Redirect to home page after successful verification
-        setLocation('/');
-      } catch (error: any) {
-        console.error('Error during auth callback:', error);
-        toast({
-          title: 'Lỗi xác thực',
-          description: error.message || 'Đã xảy ra lỗi trong quá trình xác thực.',
-          variant: 'destructive',
-        });
-        setLocation('/auth/login');
+    const upsertProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .upsert([{
+            id: user.id,
+            full_name: user.user_metadata.full_name || user.user_metadata.name || "",
+            avatar: user.user_metadata.avatar_url || "",
+            email: user.email,
+            provider: user.app_metadata?.provider || "google"
+          }]);
       }
+      // Redirect to homepage or dashboard
+      navigate("/");
     };
-
-    handleAuthCallback();
-  }, [setLocation, toast]);
+    upsertProfile();
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Đang xử lý xác thực...</h1>
-        <p className="text-gray-600">Vui lòng đợi trong giây lát.</p>
-      </div>
+    <div className="flex items-center justify-center min-h-screen">
+      <div>Đang xác thực tài khoản Google...</div>
     </div>
   );
-} 
+};
+
+export default AuthCallback; 

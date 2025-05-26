@@ -11,6 +11,13 @@ interface User {
   role: 'student' | 'teacher' | 'admin';
   avatar?: string;
   bio?: string;
+  date_of_birth?: string;
+  gender?: string;
+  grade_level?: string;
+  school_name?: string;
+  province?: string;
+  subjects?: string[];
+  free_time_slots?: string[];
 }
 
 interface AuthContextType {
@@ -21,12 +28,13 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  refetch: () => void;
+  forceRefetch: () => Promise<void>;
 }
 
 interface RegisterData {
-  email: string;
+  phoneNumber: string;
   password: string;
-  fullName: string;
   role: 'student' | 'teacher';
 }
 
@@ -38,6 +46,8 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: async () => {},
+  refetch: () => {},
+  forceRefetch: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -88,6 +98,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: profile.role || 'student',
       avatar: profile.avatar || '',
       bio: profile.bio || '',
+      date_of_birth: profile.date_of_birth || '',
+      gender: profile.gender || '',
+      grade_level: profile.grade_level || '',
+      school_name: profile.school_name || '',
+      province: profile.province || '',
+      subjects: profile.subjects || [],
+      free_time_slots: profile.free_time_slots || [],
     } as User;
   };
 
@@ -97,6 +114,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     staleTime: 0,
     retry: false,
   });
+
+  // Add forceRefetch to immediately update user profile in memory
+  const forceRefetch = async () => {
+    await refetch();
+  };
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -126,20 +148,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
       // Sign up with Supabase Auth
       const { error: signUpError } = await supabase.auth.signUp({
-        email: userData.email,
+        phone: userData.phoneNumber,
         password: userData.password,
         options: {
           data: {
-            fullName: userData.fullName,
             role: userData.role,
           },
-          emailRedirectTo: 'https://aitheduconnect-hainhhe171927.replit.app/auth/callback'
+          channel: 'sms'
         },
       });
       if (signUpError) throw signUpError;
       toast({
         title: 'Đăng ký thành công',
-        description: 'Vui lòng xác nhận email trước khi đăng nhập.',
+        description: 'Vui lòng xác nhận số điện thoại trước khi đăng nhập.',
       });
     } catch (err: any) {
       setError(err);
@@ -178,12 +199,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user: user ?? null,
-      isLoading, 
-      error, 
-      isAuthenticated, 
-      login, 
-      register, 
+        isLoading,
+        error,
+        isAuthenticated,
+        login,
+        register,
         logout,
+        refetch,
+        forceRefetch,
       }}
     >
       {children}

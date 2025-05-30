@@ -16,6 +16,31 @@ import Logo from "@/components/ui/Logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AuthModal from "@/components/auth/AuthModal";
 import OnboardingModal from '@/components/onboarding/OnboardingModal';
+import { supabase } from '@/lib/supabaseClient';
+import type { User } from "@/context/AuthContext";
+
+const REQUIRED_PROFILE_FIELDS = [
+  'fullName',
+  'date_of_birth',
+  'gender',
+  'grade_level',
+  'school_name',
+  'province',
+  'subjects',
+  'free_time_slots',
+];
+
+function isProfileComplete(user: User | null): boolean {
+  if (!user) return false;
+  for (const field of REQUIRED_PROFILE_FIELDS) {
+    if (Array.isArray(user[field as keyof User])) {
+      if (!user[field as keyof User] || (user[field as keyof User] as any[]).length === 0) return false;
+    } else {
+      if (!user[field as keyof User]) return false;
+    }
+  }
+  return true;
+}
 
 const Header = () => {
   const [location] = useLocation();
@@ -52,6 +77,34 @@ const Header = () => {
     window.addEventListener('openOnboardingModal', handleSetOnboardingModalOpen);
     return () => window.removeEventListener('openOnboardingModal', handleSetOnboardingModalOpen);
   }, []);
+
+  useEffect(() => {
+    // Only check onboarding if authenticated
+    const checkProfile = async () => {
+      if (!isAuthenticated || !user) {
+        setIsOnboardingOpen(false);
+        return;
+      }
+      // Fetch latest profile from Supabase
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error || !data) {
+        setIsOnboardingOpen(true);
+        return;
+      }
+      // Map data to user shape if needed
+      const profile = {
+        ...user,
+        ...data,
+        fullName: data.full_name || user.fullName,
+      };
+      setIsOnboardingOpen(!isProfileComplete(profile));
+    };
+    checkProfile();
+  }, [isAuthenticated, user]);
 
   // Animation variants
   const mobileMenuVariants = {

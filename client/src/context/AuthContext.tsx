@@ -20,6 +20,8 @@ interface User {
   free_time_slots?: string[];
 }
 
+export type { User };
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
